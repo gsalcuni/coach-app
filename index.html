@@ -1372,6 +1372,11 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
 
   try {
     // 1. Upload foto su Cloudinary
+    console.log('Inizio upload foto Cloudinary...');
+    console.log('File frontale:', fotoFiles.frontale?.name, fotoFiles.frontale?.size);
+    console.log('File laterale:', fotoFiles.laterale?.name, fotoFiles.laterale?.size);
+    console.log('File posteriore:', fotoFiles.posteriore?.name, fotoFiles.posteriore?.size);
+    
     const [urlFrontale, urlLaterale, urlPosteriore] = await Promise.all([
       uploadFoto(fotoFiles.frontale, 'frontale'),
       uploadFoto(fotoFiles.laterale, 'laterale'),
