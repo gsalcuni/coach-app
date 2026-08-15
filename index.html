@@ -1384,14 +1384,19 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
     ]);
 
     // 2. Leggi dati diario per IAM
-    const diarioDati = await caricaDiario();
-    const ultimi30 = diarioDati.slice(0, 30);
-    const mediaEmotivo = ultimi30.length > 0
-      ? (ultimi30.reduce((s, v) => s + (v.emotivo || 3), 0) / ultimi30.length).toFixed(1)
-      : '3.0';
-    const mediaEnergia = ultimi30.length > 0
-      ? (ultimi30.reduce((s, v) => s + (v.energia || 3), 0) / ultimi30.length).toFixed(1)
-      : '3.0';
+    let mediaEmotivo = '3.0';
+    let mediaEnergia = '3.0';
+    try {
+      const diarioDati = await caricaDiario();
+      const ultimi30 = diarioDati.slice(0, 30);
+      if (ultimi30.length > 0) {
+        mediaEmotivo = (ultimi30.reduce((s, v) => s + (v.emotivo || 3), 0) / ultimi30.length).toFixed(1);
+        mediaEnergia = (ultimi30.reduce((s, v) => s + (v.energia || 3), 0) / ultimi30.length).toFixed(1);
+      }
+    } catch(e) {
+      console.log('Diario non disponibile, uso valori default IAM');
+    }
+    console.log('IAM media emotivo:', mediaEmotivo, 'energia:', mediaEnergia);
 
     // 3. Chiama Claude API
     const prompt = `Sei un AI Personal Trainer e Coach esperto in body assessment. Analizza le seguenti tre foto corporee e i parametri forniti per generare un assessment completo.
