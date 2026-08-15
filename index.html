@@ -1415,7 +1415,7 @@ Rispondi SOLO con un oggetto JSON valido senza markdown, con questa struttura es
   "proiezione": "proiezione realistica a 12 settimane con numeri concreti in 4-5 frasi"
 }`;
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
