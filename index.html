@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Il Tuo Coach</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; background: #f4f1ea;
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: #1a2b3a; padding-bottom: 90px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+  header { padding: 24px 16px 12px; max-width: 480px; margin: 0 auto; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #8a7355; margin-bottom: 4px; font-weight: 600; }
+  h1 { font-family: Georgia, serif; font-size: 26px; font-weight: 700; margin: 0; }
+
+  .intro { font-size: 13px; color: #5a5248; line-height: 1.5; margin: 10px 0 16px; }
+
+  .card { background: #fff; border: 1px solid #e0d9c8; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+  .card-label { font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: #8a7355; margin-bottom: 12px; font-weight: 600; }
+
+  .inputs-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .field label { font-size: 11.5px; color: #444; display: block; margin-bottom: 4px; }
+  .field input, input.small {
+    width: 100%; padding: 9px 8px; border: 1px solid #d8cfba; border-radius: 6px;
+    font-size: 15px; font-family: inherit; background: #fafaf7;
+  }
+  input:focus { outline: 2px solid #1a2b3a; border-color: #1a2b3a; }
+
+  .toggle-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .toggle-btn { flex: 1; padding: 12px; border-radius: 8px; cursor: pointer; border: 1px solid #e0d9c8; background: #fff; color: #1a2b3a; text-align: left; font-family: inherit; }
+  .toggle-btn.active { border: 1.5px solid #1a2b3a; background: #1a2b3a; color: #f4f1ea; }
+  .toggle-btn .t1 { font-size: 13px; font-weight: 700; }
+  .toggle-btn .t2 { font-size: 10.5px; opacity: 0.75; margin-top: 1px; }
+
+  .calorie-card { background: #1a2b3a; color: #f4f1ea; border-radius: 8px; padding: 18px 16px; margin-bottom: 14px; }
+  .calorie-card .card-label { color: #b8a888; margin-bottom: 4px; }
+  .calorie-big { font-size: 36px; font-weight: 700; line-height: 1; }
+  .calorie-big span { font-size: 15px; font-weight: 400; opacity: 0.7; }
+
+  .bar { display: flex; height: 9px; border-radius: 5px; overflow: hidden; margin-bottom: 14px; }
+
+  .macro-acc { border-bottom: 1px solid #f0ebe0; }
+  .macro-acc:last-child { border-bottom: none; }
+  .macro-head {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 0; background: none; border: none; cursor: pointer; text-align: left; font-family: inherit;
+  }
+  .macro-head-left { display: flex; gap: 9px; align-items: center; }
+  .dot { width: 9px; height: 9px; border-radius: 2px; }
+  .macro-head-label { font-size: 13.5px; font-weight: 700; color: #1a2b3a; }
+  .macro-head-right { display: flex; gap: 10px; align-items: center; }
+  .macro-head-grams { font-size: 13px; font-weight: 700; }
+  .macro-head-pct { font-weight: 400; color: #8a8378; font-size: 11px; }
+  .chevron { font-size: 11px; color: #a39a8a; display: inline-block; transition: transform 0.15s; }
+  .chevron.open { transform: rotate(90deg); }
+
+  .macro-body { display: none; padding-bottom: 12px; }
+  .macro-body.open { display: block; }
+  .alim-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 12px; }
+  .alim-name { font-weight: 600; color: #1a2b3a; }
+  .alim-sub { font-size: 10.5px; color: #8a8378; margin-top: 1px; }
+  .alim-right { text-align: right; flex-shrink: 0; padding-left: 8px; }
+  .alim-grams { font-weight: 700; font-size: 12.5px; }
+  .alim-kcal { font-size: 10px; color: #8a8378; }
+
+  .footnote { font-size: 11.5px; color: #5a5248; line-height: 1.55; padding: 4px 4px 20px; }
+  .footnote strong { color: #1a2b3a; }
+
+  nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e0d9c8; display: flex; max-width: 480px; margin: 0 auto; }
+  .nav-btn { flex: 1; padding: 12px 0 14px; border: none; background: none; cursor: pointer; color: #a39a8a; font-family: inherit; border-top: 2px solid transparent; margin-top: -1px; text-align: center; }
+  .nav-btn.active { color: #1a2b3a; border-top: 2px solid #1a2b3a; }
+  .nav-icon { font-size: 18px; }
+  .nav-label { font-size: 11px; font-weight: 500; margin-top: 2px; }
+  .nav-btn.active .nav-label { font-weight: 700; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .giorni-row { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; }
+  .giorno-btn { flex: 0 0 auto; padding: 9px 13px; border-radius: 7px; font-size: 12.5px; border: 1px solid #e0d9c8; background: #fff; color: #1a2b3a; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .giorno-btn.active { border: 1.5px solid #1a2b3a; background: #1a2b3a; color: #f4f1ea; }
+
+  .salvataggio-msg { font-size: 11.5px; color: #6b8e7a; margin-bottom: 8px; font-weight: 600; min-height: 16px; }
+
+  .esercizio-card { background: #fff; border: 1px solid #e0d9c8; border-radius: 8px; padding: 13px 14px; margin-bottom: 10px; }
+  .es-head { width: 100%; display: flex; justify-content: space-between; align-items: center; background: none; border: none; padding: 0; cursor: pointer; text-align: left; font-family: inherit; }
+  .es-nome { font-size: 13.5px; font-weight: 700; color: #1a2b3a; }
+  .es-ultima { font-size: 11px; color: #8a8378; margin-top: 2px; }
+  .es-nessuno { font-size: 11px; color: #a39a8a; margin-top: 2px; }
+
+  .es-body { display: none; margin-top: 12px; border-top: 1px solid #f0ebe0; padding-top: 12px; }
+  .es-body.open { display: block; }
+  .es-inputs { display: flex; gap: 8px; margin-bottom: 10px; }
+  .es-inputs input { flex: 1; min-width: 0; }
+  .es-save-btn { padding: 8px 16px; border-radius: 6px; border: none; background: #1a2b3a; color: #f4f1ea; font-weight: 700; font-size: 12.5px; cursor: pointer; font-family: inherit; flex-shrink: 0; }
+
+  .storico-label { font-size: 10.5px; color: #8a7355; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600; }
+  .storico-row { display: flex; justify-content: space-between; font-size: 11.5px; padding: 4px 0; color: #5a5248; }
+  .storico-row.recent { color: #1a2b3a; font-weight: 700; }
+
+  .backup-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .backup-btn {
+    flex: 1; padding: 10px; border-radius: 7px; border: 1px solid #e0d9c8; background: #fff;
+    color: #1a2b3a; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; text-align: center;
+  }
+  #import-input { display: none; }
+
+  /* DIARIO */
+  .diario-section { background: #fff; border: 1px solid #e0d9c8; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+  .diario-section-title { font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: #8a7355; margin-bottom: 10px; font-weight: 600; }
+  .sintomo-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .sintomo-row input[type="text"] { flex: 1; padding: 8px 9px; border: 1px solid #d8cfba; border-radius: 6px; font-size: 13px; font-family: inherit; background: #fafaf7; }
+  .scale-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .scale-label { font-size: 12px; color: #5a5248; min-width: 90px; }
+  .scale-btns { display: flex; gap: 4px; }
+  .scale-btn { width: 34px; height: 34px; border-radius: 6px; border: 1px solid #d8cfba; background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; color: #1a2b3a; }
+  .scale-btn.sel { background: #1a2b3a; color: #f4f1ea; border-color: #1a2b3a; }
+  .check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .check-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #1a2b3a; }
+  .check-row label { font-size: 13px; color: #1a2b3a; cursor: pointer; }
+  .diario-textarea { width: 100%; padding: 9px; border: 1px solid #d8cfba; border-radius: 6px; font-size: 13px; font-family: inherit; background: #fafaf7; resize: none; line-height: 1.5; }
+  .diario-save-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #1a2b3a; color: #f4f1ea; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; margin-top: 6px; }
+  .diario-msg { font-size: 11.5px; color: #6b8e7a; font-weight: 600; min-height: 16px; margin-bottom: 8px; text-align: center; }
+  .storico-entry { border-bottom: 1px solid #f0ebe0; padding: 10px 0; }
+  .storico-entry:last-child { border-bottom: none; padding-bottom: 0; }
+  .storico-entry-date { font-size: 11px; font-weight: 700; color: #8a7355; margin-bottom: 3px; }
+  .storico-entry-body { font-size: 11.5px; color: #333; line-height: 1.5; }
+  .add-sintomo-btn { padding: 7px 12px; border-radius: 6px; border: 1px solid #d8cfba; background: #fff; font-size: 12px; cursor: pointer; font-family: inherit; color: #1a2b3a; margin-top: 4px; }
+  .remove-sintomo-btn { padding: 6px 10px; border-radius: 6px; border: 1px solid #fcc; background: #fff; font-size: 12px; cursor: pointer; color: #8b2a2a; font-family: inherit; flex-shrink: 0; }
+
+  /* ── PROFILO TAB ── */
+  .profilo-stato { background:#1a2b3a; color:#f4f1ea; border-radius:8px; padding:18px 16px; margin-bottom:14px; }
+  .profilo-stato-label { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:#b8a888; margin-bottom:4px; font-weight:600; }
+  .profilo-stato-titolo { font-size:18px; font-weight:700; margin-bottom:6px; }
+  .profilo-stato-desc { font-size:12.5px; opacity:0.8; line-height:1.5; }
+
+  .profilo-btn-primary { width:100%; padding:14px; border-radius:8px; border:none; background:#1a2b3a; color:#f4f1ea; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; margin-top:8px; }
+  .profilo-btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+  .profilo-btn-secondary { width:100%; padding:12px; border-radius:8px; border:1px solid #1a2b3a; background:#fff; color:#1a2b3a; font-weight:600; font-size:13px; cursor:pointer; font-family:inherit; margin-top:8px; }
+
+  .profilo-form-section { margin-bottom:16px; }
+  .profilo-form-title { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#8a7355; font-weight:700; margin-bottom:10px; }
+  .profilo-field { margin-bottom:10px; }
+  .profilo-field label { font-size:12px; color:#5a5248; display:block; margin-bottom:4px; font-weight:600; }
+  .profilo-field input, .profilo-field select, .profilo-field textarea {
+    width:100%; padding:10px 10px; border:1px solid #d8cfba; border-radius:6px;
+    font-size:14px; font-family:inherit; background:#fafaf7; box-sizing:border-box;
+  }
+  .profilo-field textarea { resize:none; }
+  .profilo-two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  .foto-upload-area { border:2px dashed #d8cfba; border-radius:8px; padding:20px 12px; text-align:center; cursor:pointer; background:#fafaf7; margin-bottom:10px; position:relative; }
+  .foto-upload-area.has-photo { border-color:#6b8e7a; border-style:solid; }
+  .foto-upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .foto-icon { font-size:28px; margin-bottom:6px; }
+  .foto-label { font-size:12px; font-weight:700; color:#1a2b3a; margin-bottom:2px; }
+  .foto-sublabel { font-size:10.5px; color:#8a8378; }
+  .foto-preview { width:100%; height:120px; object-fit:cover; border-radius:6px; display:none; }
+  .foto-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+
+  .spinner-overlay { display:none; position:fixed; inset:0; background:rgba(26,43,58,0.85); z-index:100; flex-direction:column; align-items:center; justify-content:center; color:#f4f1ea; }
+  .spinner-overlay.active { display:flex; }
+  .spinner { width:40px; height:40px; border:3px solid rgba(244,241,234,0.3); border-top-color:#f4f1ea; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:16px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .spinner-msg { font-size:14px; font-weight:600; text-align:center; max-width:240px; line-height:1.5; }
+
+  .report-section { background:#fff; border:1px solid #e0d9c8; border-radius:8px; margin-bottom:10px; overflow:hidden; }
+  .report-head { width:100%; display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:none; border:none; cursor:pointer; text-align:left; font-family:inherit; }
+  .report-head-title { font-size:13px; font-weight:700; color:#1a2b3a; }
+  .report-body { display:none; padding:0 16px 14px; font-size:13px; color:#3a4055; line-height:1.6; }
+  .report-body.open { display:block; }
+
+  .assessment-progress { display:flex; gap:4px; margin-bottom:16px; }
+  .progress-step { flex:1; height:3px; border-radius:2px; background:#e0d9c8; }
+  .progress-step.done { background:#1a2b3a; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Mental &amp; Personal Trainer</div>
+  <h1>Il Tuo Coach</h1>
+</header>
+
+<div class="wrap">
+
+  <div class="tab-content active" id="tab-nutrizione">
+    <p class="intro">Target calibrato sulla scheda Push/Pull/Total Body. Obiettivo: ricomposizione corporea.</p>
+
+    <div class="card">
+      <div class="card-label">I tuoi dati</div>
+      <div class="inputs-grid">
+        <div class="field"><label>Peso (kg)</label><input type="number" id="peso" value="80"></div>
+        <div class="field"><label>Altezza (cm)</label><input type="number" id="altezza" value="185"></div>
+        <div class="field"><label>Età</label><input type="number" id="eta" value="38"></div>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-btn active" id="btn-allenamento">
+        <div class="t1">Giorno Allenamento</div><div class="t2">Lun · Mer · Ven</div>
+      </div>
+      <div class="toggle-btn" id="btn-riposo">
+        <div class="t1">Giorno Riposo</div><div class="t2">Mar · Gio · Sab · Dom</div>
+      </div>
+    </div>
+
+    <div class="calorie-card">
+      <div class="card-label">Target calorico</div>
+      <div class="calorie-big"><span id="kcal-value">0</span> <span>kcal</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Macronutrienti — tocca per vedere alternative</div>
+      <div class="bar">
+        <div id="bar-p" style="background:#b3504f"></div>
+        <div id="bar-c" style="background:#c9a24b"></div>
+        <div id="bar-g" style="background:#6b8e7a"></div>
+      </div>
+      <div id="macro-accordions"></div>
+    </div>
+
+    <div class="footnote">
+      <strong>Come usarlo:</strong> i grammi mostrati per ogni alimento sono la quantità che, da sola, coprirebbe l'intero target giornaliero di quel macronutriente — usali come riferimento per combinare più fonti nei tuoi pasti. Pesati 2-3 volte a settimana per tarare nel tempo.
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-allenamento">
+    <p class="intro">Registra i carichi di ogni esercizio. I dati restano salvati su questo telefono/browser.</p>
+
+    <div class="backup-row">
+      <button class="backup-btn" id="export-btn">⬇ Esporta backup</button>
+      <button class="backup-btn" id="import-btn">⬆ Importa backup</button>
+      <input type="file" id="import-input" accept=".json">
+    </div>
+
+    <div class="giorni-row" id="giorni-row"></div>
+    <div class="salvataggio-msg" id="salvataggio-msg"></div>
+    <div id="esercizi-list"></div>
+  </div>
+
+  <!-- TAB DIARIO -->
+  <div class="tab-content" id="tab-diario">
+    <p class="intro">Traccia ogni giorno sintomi fisici, stato mentale e spirito. I dati si salvano automaticamente.</p>
+
+    <div class="diario-msg" id="diario-msg"></div>
+
+    <!-- SINTOMI FISICI -->
+    <div class="diario-section">
+      <div class="diario-section-title">🩺 Sintomi fisici</div>
+      <div id="sintomi-container"></div>
+      <button class="add-sintomo-btn" id="add-sintomo-btn">+ Aggiungi sintomo</button>
+    </div>
+
+    <!-- SONNO -->
+    <div class="diario-section">
+      <div class="diario-section-title">😴 Sonno</div>
+      <div class="scale-row">
+        <span class="scale-label">Ore dormite</span>
+        <div class="scale-btns" id="scale-sonno"></div>
+      </div>
+      <div class="scale-row">
+        <span class="scale-label">Qualità (1-5)</span>
+        <div class="scale-btns" id="scale-qualita-sonno"></div>
+      </div>
+    </div>
+
+    <!-- STATO EMOTIVO -->
+    <div class="diario-section">
+      <div class="diario-section-title">🧠 Mente & Spirito</div>
+      <div class="scale-row">
+        <span class="scale-label">Stato emotivo (1-5)</span>
+        <div class="scale-btns" id="scale-emotivo"></div>
+      </div>
+      <div class="scale-row">
+        <span class="scale-label">Energia (1-5)</span>
+        <div class="scale-btns" id="scale-energia"></div>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <div class="check-row">
+          <input type="checkbox" id="check-braindump">
+          <label for="check-braindump">Brain Dump fatto</label>
+        </div>
+        <div class="check-row">
+          <input type="checkbox" id="check-respiro">
+          <label for="check-respiro">10 min respirazione fatti</label>
+        </div>
+        <div class="check-row">
+          <input type="checkbox" id="check-palestra">
+          <label for="check-palestra">Allenamento/movimento fatto</label>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <div style="font-size: 12px; color: #5a5248; margin-bottom: 4px;">Azione individuata per domani</div>
+        <textarea class="diario-textarea" id="azione-domani" rows="2" placeholder="Una sola azione concreta..."></textarea>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <div style="font-size: 12px; color: #5a5248; margin-bottom: 4px;">Cosa sono fiero di oggi</div>
+        <textarea class="diario-textarea" id="fiero-oggi" rows="2" placeholder="Una cosa concreta, anche piccola..."></textarea>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <div style="font-size: 12px; color: #5a5248; margin-bottom: 4px;">Affermazione del giorno (Louise Hay / Hill)</div>
+        <textarea class="diario-textarea" id="affermazione" rows="2" placeholder="Es: Sono qualcuno che genera valore reale e merita di essere riconosciuto..."></textarea>
+      </div>
+
+      <div style="margin-top: 10px;">
+        <div style="font-size: 12px; color: #5a5248; margin-bottom: 4px;">Note libere (evento significativo, riflessione...)</div>
+        <textarea class="diario-textarea" id="note-libere" rows="3" placeholder="Scrivi quello che vuoi ricordare di oggi..."></textarea>
+      </div>
+    </div>
+
+    <button class="diario-save-btn" id="diario-save-btn">Salva voce di oggi</button>
+
+    <!-- STORICO DIARIO -->
+    <div class="diario-section" id="storico-diario-section" style="margin-top: 16px; display:none;">
+      <div class="diario-section-title">📅 Storico ultimi 7 giorni</div>
+      <div id="storico-diario-list"></div>
+    </div>
+  </div>
+
+  <!-- TAB PROFILO -->
+  <div class="tab-content" id="tab-profilo">
+
+    <!-- STATO: nessun assessment -->
+    <div id="profilo-benvenuto">
+      <div class="profilo-stato">
+        <div class="profilo-stato-label">Body Assessment</div>
+        <div class="profilo-stato-titolo">Configura il tuo profilo</div>
+        <div class="profilo-stato-desc">Carica tre foto e inserisci i tuoi dati. L'AI analizza il tuo corpo, genera un piano personalizzato e configura l'app per te.</div>
+      </div>
+      <button class="profilo-btn-primary" id="btn-inizia-assessment">Inizia Assessment</button>
+    </div>
+
+    <!-- FORM STEP 1: parametri -->
+    <div id="profilo-form" style="display:none;">
+      <div class="assessment-progress">
+        <div class="progress-step done" id="step1-bar"></div>
+        <div class="progress-step" id="step2-bar"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">📐 Dati Antropometrici</div>
+        <div class="profilo-two-col">
+          <div class="profilo-field"><label>Peso (kg)</label><input type="number" id="p-peso" placeholder="82"></div>
+          <div class="profilo-field"><label>Altezza (cm)</label><input type="number" id="p-altezza" placeholder="185"></div>
+          <div class="profilo-field"><label>Età</label><input type="number" id="p-eta" placeholder="49"></div>
+          <div class="profilo-field"><label>Sesso</label>
+            <select id="p-sesso"><option value="M">Maschio</option><option value="F">Femmina</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">📏 Misure Corporee (cm)</div>
+        <div class="profilo-two-col">
+          <div class="profilo-field"><label>Circonferenza vita</label><input type="number" id="p-vita" placeholder="62"></div>
+          <div class="profilo-field"><label>Circonferenza fianchi</label><input type="number" id="p-fianchi" placeholder="100"></div>
+          <div class="profilo-field"><label>Circonferenza petto</label><input type="number" id="p-petto" placeholder="104"></div>
+          <div class="profilo-field"><label>Coscia destra</label><input type="number" id="p-coscia" placeholder="54"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">🎯 Obiettivi & Profilo</div>
+        <div class="profilo-field"><label>Obiettivo principale</label>
+          <select id="p-obiettivo">
+            <option value="ricomposizione">Ricomposizione corporea</option>
+            <option value="massa">Aumento massa muscolare</option>
+            <option value="definizione">Definizione</option>
+            <option value="perdita_peso">Perdita peso</option>
+            <option value="performance">Performance atletica</option>
+          </select>
+        </div>
+        <div class="profilo-field"><label>Attrezzatura disponibile</label>
+          <select id="p-attrezzatura">
+            <option value="palestra_completa">Palestra completa</option>
+            <option value="casa_pesi">Casa con pesi</option>
+            <option value="corpo_libero">Solo corpo libero / TRX / elastici</option>
+          </select>
+        </div>
+        <div class="profilo-field"><label>Livello esperienza</label>
+          <select id="p-livello">
+            <option value="principiante">Principiante</option>
+            <option value="intermedio">Intermedio</option>
+            <option value="avanzato">Avanzato</option>
+          </select>
+        </div>
+        <div class="profilo-field"><label>Limitazioni fisiche</label>
+          <textarea id="p-limitazioni" rows="2" placeholder="Es. protrusione L5-S1, epicondilite destra..."></textarea>
+        </div>
+        <div class="profilo-field"><label>Preferenze alimentari</label>
+          <textarea id="p-alimentari" rows="2" placeholder="Es. non mangio carne, intollerante al lattosio, amo la pizza..."></textarea>
+        </div>
+      </div>
+
+      <button class="profilo-btn-primary" id="btn-avanti-foto">Avanti → Carica le foto</button>
+    </div>
+
+    <!-- FORM STEP 2: foto -->
+    <div id="profilo-foto" style="display:none;">
+      <div class="assessment-progress">
+        <div class="progress-step done"></div>
+        <div class="progress-step done"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">📸 Carica le tre foto</div>
+        <p style="font-size:12px;color:#5a5248;margin-bottom:14px;line-height:1.5;">Stai in piedi dritto, in shorts o costume. Sfondo neutro, buona luce. Il coach analizza postura e composizione corporea.</p>
+
+        <div class="foto-grid">
+          <div>
+            <div class="foto-upload-area" id="area-frontale">
+              <img class="foto-preview" id="prev-frontale">
+              <div class="foto-icon">🧍</div>
+              <div class="foto-label">Frontale</div>
+              <div class="foto-sublabel">Di fronte</div>
+              <input type="file" accept="image/*" id="input-frontale" capture="environment">
+            </div>
+          </div>
+          <div>
+            <div class="foto-upload-area" id="area-laterale">
+              <img class="foto-preview" id="prev-laterale">
+              <div class="foto-icon">🧍</div>
+              <div class="foto-label">Laterale</div>
+              <div class="foto-sublabel">Di lato</div>
+              <input type="file" accept="image/*" id="input-laterale" capture="environment">
+            </div>
+          </div>
+          <div>
+            <div class="foto-upload-area" id="area-posteriore">
+              <img class="foto-preview" id="prev-posteriore">
+              <div class="foto-icon">🧍</div>
+              <div class="foto-label">Post.</div>
+              <div class="foto-sublabel">Di spalle</div>
+              <input type="file" accept="image/*" id="input-posteriore" capture="environment">
+            </div>
+          </div>
+        </div>
+
+        <div id="foto-status" style="font-size:12px;color:#8a7355;text-align:center;margin-bottom:8px;"></div>
+      </div>
+
+      <button class="profilo-btn-primary" id="btn-genera-assessment" disabled>Genera Assessment</button>
+      <button class="profilo-btn-secondary" id="btn-torna-form">← Torna ai dati</button>
+    </div>
+
+    <!-- REPORT ASSESSMENT -->
+    <div id="profilo-report" style="display:none;">
+      <div class="profilo-stato" style="background:#2d5a3d;">
+        <div class="profilo-stato-label">Assessment completato</div>
+        <div class="profilo-stato-titolo" id="report-somatotipo-title">Il tuo profilo</div>
+        <div class="profilo-stato-desc" id="report-data-label"></div>
+      </div>
+
+      <div class="report-section">
+        <button class="report-head" onclick="toggleReport('r-somatotipo')">
+          <span class="report-head-title">🧬 Somatotipo</span>
+          <span class="chevron" id="chev-r-somatotipo">›</span>
+        </button>
+        <div class="report-body" id="r-somatotipo"></div>
+      </div>
+
+      <div class="report-section">
+        <button class="report-head" onclick="toggleReport('r-postura')">
+          <span class="report-head-title">🦴 Valutazione Posturale</span>
+          <span class="chevron" id="chev-r-postura">›</span>
+        </button>
+        <div class="report-body" id="r-postura"></div>
+      </div>
+
+      <div class="report-section">
+        <button class="report-head" onclick="toggleReport('r-iam')">
+          <span class="report-head-title">🧠 Indice di Aderenza Mentale</span>
+          <span class="chevron" id="chev-r-iam">›</span>
+        </button>
+        <div class="report-body" id="r-iam"></div>
+      </div>
+
+      <div class="report-section">
+        <button class="report-head" onclick="toggleReport('r-piano')">
+          <span class="report-head-title">🏋 Piano di Allenamento</span>
+          <span class="chevron" id="chev-r-piano">›</span>
+        </button>
+        <div class="report-body" id="r-piano"></div>
+      </div>
+
+      <div class="report-section">
+        <button class="report-head" onclick="toggleReport('r-dieta')">
+          <span class="report-head-title">🍽 Piano Nutrizionale</span>
+          <span class="chevron" id="chev-r-dieta">›</span>
+        </button>
+        <div class="report-body" id="r-dieta"></div>
+      </div>
+
+      <div class="report-section">
+        <button class="report-head" onclick="toggleReport('r-proiezione')">
+          <span class="report-head-title">📈 Proiezione 12 Settimane</span>
+          <span class="chevron" id="chev-r-proiezione">›</span>
+        </button>
+        <div class="report-body" id="r-proiezione"></div>
+      </div>
+
+      <button class="profilo-btn-secondary" id="btn-nuovo-assessment" style="margin-top:8px;">Rifai assessment</button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- SPINNER -->
+<div class="spinner-overlay" id="spinner-overlay">
+  <div class="spinner"></div>
+  <div class="spinner-msg" id="spinner-msg">Sto analizzando i tuoi dati...</div>
+</div>
+
+<nav>
+  <button class="nav-btn active" id="nav-nutrizione">
+    <div class="nav-icon">🍽</div><div class="nav-label">Nutrizione</div>
+  </button>
+  <button class="nav-btn" id="nav-allenamento">
+    <div class="nav-icon">🏋</div><div class="nav-label">Allenamento</div>
+  </button>
+  <button class="nav-btn" id="nav-diario">
+    <div class="nav-icon">📓</div><div class="nav-label">Diario</div>
+  </button>
+  <button class="nav-btn" id="nav-profilo">
+    <div class="nav-icon">👤</div><div class="nav-label">Profilo</div>
+  </button>
+</nav>
+
+<script>
+const ALIMENTI = {
+  proteine: [
+    { nome: 'Petto di pollo', kcal: 165, p: 31, c: 0, g: 3.6 },
+    { nome: 'Tacchino fesa', kcal: 135, p: 29, c: 0, g: 1.5 },
+    { nome: 'Manzo magro (girello)', kcal: 145, p: 22, c: 0, g: 6 },
+    { nome: 'Black Angus', kcal: 250, p: 26, c: 0, g: 16 },
+    { nome: 'Tonno al naturale', kcal: 116, p: 26, c: 0, g: 1 },
+    { nome: 'Salmone', kcal: 208, p: 20, c: 0, g: 13 },
+    { nome: 'Merluzzo/Nasello', kcal: 82, p: 18, c: 0, g: 0.7 },
+    { nome: 'Uova intere', kcal: 155, p: 13, c: 1.1, g: 11 },
+    { nome: "Albume d'uovo", kcal: 52, p: 11, c: 0.7, g: 0.2 },
+    { nome: 'Bresaola', kcal: 151, p: 32, c: 0.4, g: 2.6 },
+    { nome: 'Whey proteine (polvere)', kcal: 380, p: 75, c: 8, g: 6 },
+    { nome: 'Fiocchi di latte / Cottage', kcal: 98, p: 11, c: 3.4, g: 4.3 },
+    { nome: 'Yogurt greco 0%', kcal: 59, p: 10, c: 3.6, g: 0.4 },
+    { nome: 'Ceci (cotti)', kcal: 164, p: 9, c: 27, g: 2.6 },
+    { nome: 'Lenticchie (cotte)', kcal: 116, p: 9, c: 20, g: 0.4 },
+  ],
+  carboidrati: [
+    { nome: 'Riso bianco (cotto)', kcal: 130, p: 2.7, c: 28, g: 0.3 },
+    { nome: 'Riso integrale (cotto)', kcal: 123, p: 2.7, c: 26, g: 1 },
+    { nome: 'Pasta (cotta)', kcal: 158, p: 5.8, c: 31, g: 0.9 },
+    { nome: 'Pasta integrale (cotta)', kcal: 150, p: 6, c: 30, g: 1.4 },
+    { nome: 'Patate (lesse)', kcal: 87, p: 1.9, c: 20, g: 0.1 },
+    { nome: 'Pane integrale', kcal: 247, p: 9, c: 41, g: 3.4 },
+    { nome: 'Pane bianco', kcal: 265, p: 9, c: 49, g: 3.2 },
+    { nome: 'Avena (fiocchi)', kcal: 389, p: 17, c: 66, g: 7 },
+    { nome: 'Piadina', kcal: 280, p: 7, c: 47, g: 7 },
+    { nome: 'Quinoa (cotta)', kcal: 120, p: 4.4, c: 21, g: 1.9 },
+    { nome: 'Banana', kcal: 89, p: 1.1, c: 23, g: 0.3 },
+    { nome: 'Mela', kcal: 52, p: 0.3, c: 14, g: 0.2 },
+    { nome: 'Frutti di bosco', kcal: 43, p: 0.7, c: 10, g: 0.3 },
+    { nome: 'Miele', kcal: 304, p: 0.3, c: 82, g: 0 },
+  ],
+  grassi: [
+    { nome: "Olio extravergine d'oliva", kcal: 884, p: 0, c: 0, g: 100 },
+    { nome: 'Avocado', kcal: 160, p: 2, c: 9, g: 15 },
+    { nome: 'Mandorle', kcal: 579, p: 21, c: 22, g: 50 },
+    { nome: 'Noci', kcal: 654, p: 15, c: 14, g: 65 },
+    { nome: "Burro d'arachidi", kcal: 588, p: 25, c: 20, g: 50 },
+    { nome: 'Parmigiano', kcal: 392, p: 33, c: 0, g: 28 },
+    { nome: 'Formaggio fresco (crescenza)', kcal: 290, p: 18, c: 2, g: 24 },
+    { nome: 'Semi di chia', kcal: 486, p: 17, c: 42, g: 31 },
+    { nome: 'Olive', kcal: 115, p: 0.8, c: 6, g: 11 },
+  ],
+};
+
+const CATEGORIE = {
+  proteine: { colore: '#b3504f', label: 'Proteine', key: 'p' },
+  carboidrati: { colore: '#c9a24b', label: 'Carboidrati', key: 'c' },
+  grassi: { colore: '#6b8e7a', label: 'Grassi', key: 'g' },
+};
+
+const SCHEDA = {
+  lunedi: { titolo: 'Push', esercizi: ['Bird Dog', 'Distensioni panca piana', 'Panca inclinata manubri', 'Croci ai cavi', 'Alzate laterali ai cavi', 'Dip alle parallele', 'Push down ai cavi'] },
+  mercoledi: { titolo: 'Pull', esercizi: ['Pallof Press', 'Lat machine', 'Pulley', 'Rematore chest-supported', 'Pullover', 'Face Pull', 'Curl manubri', 'Hammer Curl'] },
+  venerdi: { titolo: 'Total Body', esercizi: ['Dead Bug', 'Leg Press', 'Leg Extension', 'Leg Curl', 'Hip Thrust', 'Calf Raise'] },
+};
+
+let tipoGiorno = 'allenamento';
+let categoriaAperta = null;
+let giornoCorrente = 'lunedi';
+let esercizioAperto = null;
+let storico = {};
+
+const STORAGE_KEY = 'coach_allenamento_storico';
+
+/* =========================================================
+   JSONBIN STORAGE — CORS ok da qualsiasi URL
+========================================================= */
+const JSONBIN_KEY = '$2a$10$KvQ3Coeg9xRrGizCcxKLe.EAAbCm0ZjNE.AFx3ReNGHQqR734ls8a';
+const BIN_ALLENAMENTO = '6a4599beda38895dfe1ef074';
+const BIN_DIARIO = '6a4599e2f5f4af5e29508282';
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+
+async function binGet(binId) {
+  try {
+    const res = await fetch(JSONBIN_BASE + '/' + binId + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const data = await res.json();
+    console.log('binGet response:', res.status, data);
+    return data.record && data.record.payload ? data.record.payload : null;
+  } catch (e) { console.error('binGet error:', e); return null; }
+}
+
+async function binSet(binId, value) {
+  try {
+    const res = await fetch(JSONBIN_BASE + '/' + binId, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_KEY
+      },
+      body: JSON.stringify({ payload: value })
+    });
+    const data = await res.json();
+    console.log('binSet response:', res.status, data);
+    return !!data.metadata;
+  } catch (e) { console.error('binSet error:', e); return false; }
+}
+
+async function caricaStorico() {
+  if (salvataggioMsg) salvataggioMsg.textContent = '⏳ Caricamento...';
+  const raw = await binGet(BIN_ALLENAMENTO);
+  storico = raw ? JSON.parse(raw) : {};
+  if (salvataggioMsg) salvataggioMsg.textContent = '';
+  renderGiorni();
+  renderEsercizi();
+}
+
+async function salvaStoricoLocale() {
+  return await binSet(BIN_ALLENAMENTO, JSON.stringify(storico));
+}
+
+document.getElementById('nav-nutrizione').addEventListener('click', () => switchTab('nutrizione'));
+document.getElementById('nav-allenamento').addEventListener('click', () => switchTab('allenamento'));
+document.getElementById('nav-diario').addEventListener('click', () => { switchTab('diario'); renderStoricoDiario(); });
+
+function switchTab(tab) {
+  document.getElementById('tab-nutrizione').classList.toggle('active', tab === 'nutrizione');
+  document.getElementById('tab-allenamento').classList.toggle('active', tab === 'allenamento');
+  document.getElementById('tab-diario').classList.toggle('active', tab === 'diario');
+  document.getElementById('nav-nutrizione').classList.toggle('active', tab === 'nutrizione');
+  document.getElementById('nav-allenamento').classList.toggle('active', tab === 'allenamento');
+  document.getElementById('nav-diario').classList.toggle('active', tab === 'diario');
+}
+
+const pesoInput = document.getElementById('peso');
+const altezzaInput = document.getElementById('altezza');
+const etaInput = document.getElementById('eta');
+const btnAllenamento = document.getElementById('btn-allenamento');
+const btnRiposo = document.getElementById('btn-riposo');
+const macroAccordionsEl = document.getElementById('macro-accordions');
+
+function calcolaTDEE(peso, altezza, eta) {
+  const bmr = 10 * peso + 6.25 * altezza - 5 * eta + 5;
+  return Math.round(bmr * 1.55);
+}
+
+function calcolaTarget() {
+  const peso = parseFloat(pesoInput.value) || 0;
+  const altezza = parseFloat(altezzaInput.value) || 0;
+  const eta = parseFloat(etaInput.value) || 0;
+  const tdee = calcolaTDEE(peso, altezza, eta);
+  const isAll = tipoGiorno === 'allenamento';
+  const calorie = isAll ? tdee + 100 : tdee - 250;
+
+  const proteine = Math.round(peso * 2.0);
+  const proteineKcal = proteine * 4;
+  const grassi = Math.round(peso * (isAll ? 0.8 : 0.9));
+  const grassiKcal = grassi * 9;
+  const carbsKcal = Math.max(calorie - proteineKcal - grassiKcal, 0);
+  const carbs = Math.round(carbsKcal / 4);
+
+  return { peso, calorie, proteine, carbs, grassi, proteineKcal, carbsKcal, grassiKcal };
+}
+
+function renderNutrizione() {
+  const t = calcolaTarget();
+  const totale = t.proteineKcal + t.carbsKcal + t.grassiKcal;
+  const pct = {
+    proteine: totale > 0 ? Math.round((t.proteineKcal / totale) * 100) : 0,
+    carboidrati: totale > 0 ? Math.round((t.carbsKcal / totale) * 100) : 0,
+    grassi: totale > 0 ? Math.round((t.grassiKcal / totale) * 100) : 0,
+  };
+  const grammi = { proteine: t.proteine, carboidrati: t.carbs, grassi: t.grassi };
+
+  document.getElementById('kcal-value').textContent = t.calorie;
+  document.getElementById('bar-p').style.width = pct.proteine + '%';
+  document.getElementById('bar-c').style.width = pct.carboidrati + '%';
+  document.getElementById('bar-g').style.width = pct.grassi + '%';
+
+  macroAccordionsEl.innerHTML = '';
+  Object.keys(CATEGORIE).forEach((cat) => {
+    macroAccordionsEl.appendChild(creaAccordion(cat, grammi[cat], pct[cat]));
+  });
+}
+
+function creaAccordion(cat, grammiTarget, pctVal) {
+  const info = CATEGORIE[cat];
+  const isOpen = categoriaAperta === cat;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'macro-acc';
+
+  const head = document.createElement('button');
+  head.className = 'macro-head';
+  head.innerHTML =
+    '<div class="macro-head-left">' +
+      '<div class="dot" style="background:' + info.colore + '"></div>' +
+      '<span class="macro-head-label">' + info.label + '</span>' +
+    '</div>' +
+    '<div class="macro-head-right">' +
+      '<span class="macro-head-grams">' + grammiTarget + 'g <span class="macro-head-pct">(' + pctVal + '%)</span></span>' +
+      '<span class="chevron ' + (isOpen ? 'open' : '') + '">\u203A</span>' +
+    '</div>';
+  head.addEventListener('click', () => {
+    categoriaAperta = isOpen ? null : cat;
+    renderNutrizione();
+  });
+
+  const body = document.createElement('div');
+  body.className = 'macro-body' + (isOpen ? ' open' : '');
+
+  ALIMENTI[cat].forEach((alim) => {
+    const grPerCoprire = Math.round((grammiTarget / alim[info.key]) * 100);
+    const kcalEq = Math.round((grPerCoprire / 100) * alim.kcal);
+    const row = document.createElement('div');
+    row.className = 'alim-row';
+    row.innerHTML =
+      '<div>' +
+        '<div class="alim-name">' + alim.nome + '</div>' +
+        '<div class="alim-sub">' + alim.kcal + ' kcal / 100g · P' + alim.p + ' C' + alim.c + ' G' + alim.g + '</div>' +
+      '</div>' +
+      '<div class="alim-right">' +
+        '<div class="alim-grams">' + grPerCoprire + 'g</div>' +
+        '<div class="alim-kcal">' + kcalEq + ' kcal</div>' +
+      '</div>';
+    body.appendChild(row);
+  });
+
+  wrap.appendChild(head);
+  wrap.appendChild(body);
+  return wrap;
+}
+
+btnAllenamento.addEventListener('click', () => {
+  tipoGiorno = 'allenamento';
+  btnAllenamento.classList.add('active');
+  btnRiposo.classList.remove('active');
+  renderNutrizione();
+});
+btnRiposo.addEventListener('click', () => {
+  tipoGiorno = 'riposo';
+  btnRiposo.classList.add('active');
+  btnAllenamento.classList.remove('active');
+  renderNutrizione();
+});
+[pesoInput, altezzaInput, etaInput].forEach(function (el) { el.addEventListener('input', renderNutrizione); });
+
+const giorniRow = document.getElementById('giorni-row');
+const eserciziList = document.getElementById('esercizi-list');
+const salvataggioMsg = document.getElementById('salvataggio-msg');
+
+// Event delegation — un solo listener sul container invece di uno per pulsante
+eserciziList.addEventListener('click', async function(e) {
+  // Elimina voce storico
+  const delBtn = e.target.closest('[data-delete-es]');
+  if (delBtn) {
+    const nome = delBtn.dataset.deleteEs;
+    const ts = parseInt(delBtn.dataset.deleteTs, 10);
+    if (storico[nome]) {
+      storico[nome] = storico[nome].filter(function(entry) { return entry.ts !== ts; });
+      const msgEl = document.getElementById('salvataggio-msg');
+      if (msgEl) msgEl.textContent = '⏳ Eliminazione...';
+      const ok = await salvaStoricoLocale();
+      if (msgEl) msgEl.textContent = ok ? 'Eliminato ✓' : 'Errore';
+      setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 1500);
+      renderEsercizi();
+    }
+    return;
+  }
+
+  const btn = e.target.closest('[data-save-es]');
+  if (!btn) return;
+  const nome = btn.dataset.saveEs;
+  const card = btn.closest('.esercizio-card');
+  if (!card) return;
+  const inputs = card.querySelectorAll('input[type="number"]');
+  // ordine nel DOM: serie, rip, peso
+  const serieVal = inputs[0] ? parseInt(inputs[0].value, 10) || null : null;
+  const ripVal = inputs[1] ? parseInt(inputs[1].value, 10) : 0;
+  const pesoVal = inputs[2] ? parseFloat(inputs[2].value) : 0;
+  const noteEl = card.querySelector('input[type="text"]');
+  const noteVal = noteEl ? noteEl.value.trim() : '';
+
+  console.log('Salva delegato:', nome, 'serie:', serieVal, 'rip:', ripVal, 'peso:', pesoVal);
+  if (!ripVal && !pesoVal && !noteVal) { console.log('Nessun dato'); return; }
+
+  const oggi = new Date().toISOString().slice(0, 10);
+  if (!storico[nome]) storico[nome] = [];
+  storico[nome] = [{ data: oggi, peso: pesoVal, ripetizioni: ripVal, serie: serieVal, note: noteVal, ts: Date.now() }, ...storico[nome]].slice(0, 50);
+
+  const msgEl = document.getElementById('salvataggio-msg');
+  if (msgEl) msgEl.textContent = '⏳ Salvataggio...';
+  const ok = await salvaStoricoLocale();
+  console.log('Salvataggio result:', ok);
+  if (msgEl) msgEl.textContent = ok ? 'Salvato ✓' : 'Errore salvataggio';
+  setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 1500);
+
+  esercizioAperto = nome;
+  renderEsercizi();
+});
+
+function formatData(isoDate) {
+  const d = new Date(isoDate);
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+}
+
+function renderGiorni() {
+  giorniRow.innerHTML = '';
+  Object.entries(SCHEDA).forEach(([key, val]) => {
+    const btn = document.createElement('button');
+    btn.className = 'giorno-btn' + (key === giornoCorrente ? ' active' : '');
+    btn.textContent = val.titolo;
+    btn.addEventListener('click', () => {
+      giornoCorrente = key;
+      esercizioAperto = null;
+      renderGiorni();
+      renderEsercizi();
+    });
+    giorniRow.appendChild(btn);
+  });
+}
+
+function renderEsercizi() {
+  eserciziList.innerHTML = '';
+  SCHEDA[giornoCorrente].esercizi.forEach((nome) => {
+    eserciziList.appendChild(creaEsercizioCard(nome));
+  });
+}
+
+function creaEsercizioCard(nome) {
+  const storicoEs = storico[nome] || [];
+  const ultima = storicoEs[0];
+  const isOpen = esercizioAperto === nome;
+
+  const card = document.createElement('div');
+  card.className = 'esercizio-card';
+
+  const head = document.createElement('button');
+  head.className = 'es-head';
+  head.innerHTML =
+    '<div>' +
+      '<div class="es-nome">' + nome + '</div>' +
+      (ultima
+        ? '<div class="es-ultima">Ultima: ' + formatData(ultima.data) + (ultima.serie && !isNaN(ultima.serie) ? ' · ' + ultima.serie + 'x' : '') + (ultima.ripetizioni && !isNaN(ultima.ripetizioni) ? ultima.ripetizioni + ' rip' : '') + (ultima.peso && !isNaN(ultima.peso) && ultima.peso > 0 ? ' · ' + ultima.peso + 'kg' : '') + (ultima.note ? ' · ' + ultima.note.substring(0,30) : '') + '</div>'
+        : '<div class="es-nessuno">Nessun dato registrato</div>') +
+    '</div>' +
+    '<span class="chevron ' + (isOpen ? 'open' : '') + '">\u203A</span>';
+  head.addEventListener('click', () => {
+    esercizioAperto = isOpen ? null : nome;
+    renderEsercizi();
+  });
+
+  const body = document.createElement('div');
+  body.className = 'es-body' + (isOpen ? ' open' : '');
+
+  const pesoInputEs = document.createElement('input');
+  pesoInputEs.type = 'number'; pesoInputEs.inputMode = 'decimal'; pesoInputEs.placeholder = 'kg';
+  pesoInputEs.dataset.input = 'peso';
+  pesoInputEs.style.cssText = 'flex:1;min-width:0;padding:8px 9px;border:1px solid #d8cfba;border-radius:6px;font-size:14px;background:#fafaf7;';
+
+  const ripInputEs = document.createElement('input');
+  ripInputEs.type = 'number'; ripInputEs.inputMode = 'numeric'; ripInputEs.placeholder = 'rip';
+  ripInputEs.dataset.input = 'rip';
+  ripInputEs.style.cssText = 'flex:1;min-width:0;padding:8px 9px;border:1px solid #d8cfba;border-radius:6px;font-size:14px;background:#fafaf7;';
+
+  const serieInputEs = document.createElement('input');
+  serieInputEs.type = 'number'; serieInputEs.inputMode = 'numeric'; serieInputEs.placeholder = 'serie';
+  serieInputEs.dataset.input = 'serie';
+  serieInputEs.style.cssText = 'flex:1;min-width:0;padding:8px 9px;border:1px solid #d8cfba;border-radius:6px;font-size:14px;background:#fafaf7;';
+
+  const noteInputEs = document.createElement('input');
+  noteInputEs.type = 'text'; noteInputEs.placeholder = 'Note (es. RIR 2, sensazioni...)';
+  noteInputEs.dataset.input = 'note';
+  noteInputEs.style.cssText = 'width:100%;padding:8px 9px;border:1px solid #d8cfba;border-radius:6px;font-size:13px;background:#fafaf7;margin-bottom:10px;box-sizing:border-box;';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'es-save-btn';
+  saveBtn.textContent = 'Salva';
+  saveBtn.dataset.saveEs = nome;
+
+  const inputsRow = document.createElement('div');
+  inputsRow.className = 'es-inputs';
+  inputsRow.style.cssText = 'display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;';
+  inputsRow.appendChild(serieInputEs);
+  inputsRow.appendChild(ripInputEs);
+  inputsRow.appendChild(pesoInputEs);
+  inputsRow.appendChild(saveBtn);
+  body.appendChild(inputsRow);
+  body.appendChild(noteInputEs);
+
+  if (storicoEs.length > 0) {
+    const label = document.createElement('div');
+    label.className = 'storico-label';
+    label.textContent = 'Storico';
+    body.appendChild(label);
+
+    storicoEs.slice(0, 8).forEach((entry, i) => {
+      const row = document.createElement('div');
+      row.className = 'storico-row' + (i === 0 ? ' recent' : '');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;font-size:11.5px;padding:5px 0;border-bottom:1px solid #f0ebe0;gap:8px;';
+
+      // Costruisci stringa contenuto
+      const serieVal = entry.serie && !isNaN(entry.serie) ? entry.serie : null;
+      const ripVal = entry.ripetizioni && !isNaN(entry.ripetizioni) ? entry.ripetizioni : null;
+      const pesoVal = entry.peso && !isNaN(entry.peso) && entry.peso > 0 ? entry.peso : null;
+
+      let contenuto = '';
+      if (serieVal || ripVal || pesoVal) {
+        const parts = [];
+        if (serieVal) parts.push(serieVal + 'x');
+        if (ripVal) parts.push(ripVal + ' rip');
+        if (pesoVal) parts.push(pesoVal + 'kg');
+        contenuto = parts.join(' · ');
+      }
+      if (entry.note) {
+        contenuto = contenuto ? contenuto + ' · ' + entry.note : entry.note;
+      }
+      if (!contenuto) contenuto = '—';
+
+      const leftDiv = document.createElement('div');
+      leftDiv.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;';
+      leftDiv.innerHTML =
+        '<span style="font-size:10px;color:#8a7355;font-weight:600;">' + formatData(entry.data) + '</span>' +
+        '<span style="color:' + (i === 0 ? '#1a2b3a' : '#5a5248') + ';font-weight:' + (i === 0 ? '700' : '400') + ';">' + contenuto + '</span>';
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '✕';
+      delBtn.dataset.deleteEs = nome;
+      delBtn.dataset.deleteTs = entry.ts;
+      delBtn.style.cssText = 'border:none;background:none;color:#c0a0a0;cursor:pointer;font-size:11px;padding:2px 4px;flex-shrink:0;';
+
+      row.appendChild(leftDiv);
+      row.appendChild(delBtn);
+      body.appendChild(row);
+    });
+  }
+
+  card.appendChild(head);
+  card.appendChild(body);
+  return card;
+}
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  const dataStr = JSON.stringify(storico, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const oggi = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'backup_allenamento_' + oggi + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-input').click();
+});
+
+document.getElementById('import-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const imported = JSON.parse(evt.target.result);
+      storico = imported;
+      salvaStoricoLocale();
+      renderEsercizi();
+      salvataggioMsg.textContent = 'Backup importato ✓';
+      setTimeout(() => { salvataggioMsg.textContent = ''; }, 2000);
+    } catch (err) {
+      salvataggioMsg.textContent = 'File non valido';
+      setTimeout(() => { salvataggioMsg.textContent = ''; }, 2000);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+caricaStorico();
+renderNutrizione();
+
+/* =========================================================
+   DIARIO
+========================================================= */
+const DIARIO_KEY = 'coach_diario_v1';
+let sintomiCount = 0;
+
+async function caricaDiario() {
+  const raw = await binGet(BIN_DIARIO);
+  return raw ? JSON.parse(raw) : [];
+}
+
+async function salvaDiario(voci) {
+  return await binSet(BIN_DIARIO, JSON.stringify(voci));
+}
+
+function oggi() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatDataDiario(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// Scale buttons
+function creaScaleButtons(containerId, valori, prefix) {
+  const container = document.getElementById(containerId);
+  valori.forEach(function(v) {
+    const btn = document.createElement('button');
+    btn.className = 'scale-btn';
+    btn.textContent = v;
+    btn.dataset.val = v;
+    btn.dataset.group = prefix;
+    btn.addEventListener('click', function() {
+      container.querySelectorAll('.scale-btn').forEach(function(b) { b.classList.remove('sel'); });
+      btn.classList.add('sel');
+    });
+    container.appendChild(btn);
+  });
+}
+
+creaScaleButtons('scale-sonno', ['4','5','6','7','8','9'], 'sonno');
+creaScaleButtons('scale-qualita-sonno', ['1','2','3','4','5'], 'qualita-sonno');
+creaScaleButtons('scale-emotivo', ['1','2','3','4','5'], 'emotivo');
+creaScaleButtons('scale-energia', ['1','2','3','4','5'], 'energia');
+
+function getScaleVal(containerId) {
+  const sel = document.querySelector('#' + containerId + ' .scale-btn.sel');
+  return sel ? sel.dataset.val : '';
+}
+
+// Sintomi dinamici
+function aggiungiSintomo(valore, intensita) {
+  sintomiCount++;
+  const id = 'sintomo-' + sintomiCount;
+  const container = document.getElementById('sintomi-container');
+  const row = document.createElement('div');
+  row.className = 'sintomo-row';
+  row.id = id;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Es: dolore schiena L5-S1, spalla destra...';
+  input.value = valore || '';
+
+  const scaleDiv = document.createElement('div');
+  scaleDiv.style.display = 'flex';
+  scaleDiv.style.gap = '3px';
+  [1,2,3,4,5].forEach(function(n) {
+    const b = document.createElement('button');
+    b.className = 'scale-btn';
+    b.style.width = '28px';
+    b.style.height = '28px';
+    b.style.fontSize = '11px';
+    b.textContent = n;
+    if (intensita && parseInt(intensita) === n) b.classList.add('sel');
+    b.addEventListener('click', function() {
+      scaleDiv.querySelectorAll('.scale-btn').forEach(function(x) { x.classList.remove('sel'); });
+      b.classList.add('sel');
+    });
+    scaleDiv.appendChild(b);
+  });
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'remove-sintomo-btn';
+  removeBtn.textContent = '✕';
+  removeBtn.addEventListener('click', function() { row.remove(); });
+
+  row.appendChild(input);
+  row.appendChild(scaleDiv);
+  row.appendChild(removeBtn);
+  container.appendChild(row);
+}
+
+document.getElementById('add-sintomo-btn').addEventListener('click', function() {
+  aggiungiSintomo('', '');
+});
+
+// Salva voce diario
+document.getElementById('diario-save-btn').addEventListener('click', async function() {
+  const sintomi = [];
+  document.querySelectorAll('#sintomi-container .sintomo-row').forEach(function(row) {
+    const nome = row.querySelector('input[type="text"]').value.trim();
+    const selBtn = row.querySelector('.scale-btn.sel');
+    const intensita = selBtn ? selBtn.textContent : '';
+    if (nome) sintomi.push({ nome: nome, intensita: intensita });
+  });
+
+  const voce = {
+    data: oggi(),
+    ts: Date.now(),
+    sintomi: sintomi,
+    sonno_ore: getScaleVal('scale-sonno'),
+    sonno_qualita: getScaleVal('scale-qualita-sonno'),
+    stato_emotivo: getScaleVal('scale-emotivo'),
+    energia: getScaleVal('scale-energia'),
+    brain_dump: document.getElementById('check-braindump').checked,
+    respiro: document.getElementById('check-respiro').checked,
+    palestra: document.getElementById('check-palestra').checked,
+    azione_domani: document.getElementById('azione-domani').value.trim(),
+    fiero_oggi: document.getElementById('fiero-oggi').value.trim(),
+    affermazione: document.getElementById('affermazione').value.trim(),
+    note: document.getElementById('note-libere').value.trim(),
+  };
+
+  const voci_attuali = await caricaDiario();
+  const voci = voci_attuali.filter(function(v) { return v.data !== oggi(); });
+  voci.unshift(voce);
+  const ok = await salvaDiario(voci.slice(0, 90));
+
+  const msg = document.getElementById('diario-msg');
+  msg.textContent = ok ? 'Salvato ✓ — ' + formatDataDiario(oggi()) : 'Errore salvataggio';
+  setTimeout(function() { msg.textContent = ''; }, 2000);
+
+  renderStoricoDiario();
+});
+
+async function renderStoricoDiario() {
+  const voci = (await caricaDiario()).slice(0, 7);
+  const section = document.getElementById('storico-diario-section');
+  const list = document.getElementById('storico-diario-list');
+  if (voci.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = '';
+
+  voci.forEach(function(v) {
+    const entry = document.createElement('div');
+    entry.className = 'storico-entry';
+
+    let html = '<div class="storico-entry-date">' + formatDataDiario(v.data) + '</div>';
+    html += '<div class="storico-entry-body">';
+
+    if (v.sintomi && v.sintomi.length > 0) {
+      html += '<b>Sintomi:</b> ' + v.sintomi.map(function(s) {
+        return s.nome + (s.intensita ? ' (' + s.intensita + '/5)' : '');
+      }).join(', ') + '<br>';
+    }
+    if (v.sonno_ore) html += '<b>Sonno:</b> ' + v.sonno_ore + 'h · Qualità ' + (v.sonno_qualita || '—') + '/5<br>';
+    if (v.stato_emotivo) html += '<b>Umore:</b> ' + v.stato_emotivo + '/5 · <b>Energia:</b> ' + (v.energia || '—') + '/5<br>';
+
+    const check = [];
+    if (v.brain_dump) check.push('Brain Dump ✓');
+    if (v.respiro) check.push('Respiro ✓');
+    if (v.palestra) check.push('Allenamento ✓');
+    if (check.length > 0) html += check.join(' · ') + '<br>';
+
+    if (v.fiero_oggi) html += '<b>Fiero di:</b> ' + v.fiero_oggi + '<br>';
+    if (v.azione_domani) html += '<b>Azione:</b> ' + v.azione_domani + '<br>';
+    if (v.affermazione) html += '<b>Affermazione:</b> ' + v.affermazione + '<br>';
+    if (v.note) html += '<b>Note:</b> ' + v.note;
+
+    html += '</div>';
+    entry.innerHTML = html;
+    list.appendChild(entry);
+  });
+}
+
+// Inizializza con un sintomo vuoto
+aggiungiSintomo('', '');
+renderStoricoDiario();
+
+/* =========================================================
+   NAVIGAZIONE — aggiungi tab Profilo
+========================================================= */
+document.getElementById('nav-profilo').addEventListener('click', () => {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-profilo').classList.add('active');
+  document.getElementById('nav-profilo').classList.add('active');
+  initProfilo();
+});
+
+/* =========================================================
+   PROFILO — CLOUDINARY CONFIG
+========================================================= */
+const CLOUDINARY_CLOUD = 'h89zvax6';
+const CLOUDINARY_PRESET = 'coach_app_photos';
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
+
+const BIN_PROFILO = BIN_ALLENAMENTO; // stesso bin, oggetto assessment separato
+
+let fotoFiles = { frontale: null, laterale: null, posteriore: null };
+let parametriSalvati = null;
+
+/* =========================================================
+   PROFILO — INIT
+========================================================= */
+async function initProfilo() {
+  // carica assessment esistente
+  const raw = await binGet(BIN_ALLENAMENTO);
+  let data = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch(e) { data = {}; }
+
+  if (data.assessment && data.assessment.completato) {
+    mostraReport(data.assessment);
+  } else {
+    document.getElementById('profilo-benvenuto').style.display = 'block';
+    document.getElementById('profilo-form').style.display = 'none';
+    document.getElementById('profilo-foto').style.display = 'none';
+    document.getElementById('profilo-report').style.display = 'none';
+  }
+}
+
+/* =========================================================
+   PROFILO — FLOW BUTTONS
+========================================================= */
+document.getElementById('btn-inizia-assessment').addEventListener('click', () => {
+  document.getElementById('profilo-benvenuto').style.display = 'none';
+  document.getElementById('profilo-form').style.display = 'block';
+});
+
+document.getElementById('btn-avanti-foto').addEventListener('click', () => {
+  // salva parametri in memoria
+  parametriSalvati = {
+    peso: parseFloat(document.getElementById('p-peso').value) || 0,
+    altezza: parseFloat(document.getElementById('p-altezza').value) || 0,
+    eta: parseInt(document.getElementById('p-eta').value) || 0,
+    sesso: document.getElementById('p-sesso').value,
+    vita: parseFloat(document.getElementById('p-vita').value) || 0,
+    fianchi: parseFloat(document.getElementById('p-fianchi').value) || 0,
+    petto: parseFloat(document.getElementById('p-petto').value) || 0,
+    coscia_dx: parseFloat(document.getElementById('p-coscia').value) || 0,
+    obiettivo: document.getElementById('p-obiettivo').value,
+    attrezzatura: document.getElementById('p-attrezzatura').value,
+    livello: document.getElementById('p-livello').value,
+    limitazioni: document.getElementById('p-limitazioni').value.trim(),
+    preferenze_alimentari: document.getElementById('p-alimentari').value.trim()
+  };
+  document.getElementById('profilo-form').style.display = 'none';
+  document.getElementById('profilo-foto').style.display = 'block';
+});
+
+document.getElementById('btn-torna-form').addEventListener('click', () => {
+  document.getElementById('profilo-foto').style.display = 'none';
+  document.getElementById('profilo-form').style.display = 'block';
+});
+
+document.getElementById('btn-nuovo-assessment').addEventListener('click', () => {
+  document.getElementById('profilo-report').style.display = 'none';
+  document.getElementById('profilo-benvenuto').style.display = 'block';
+  fotoFiles = { frontale: null, laterale: null, posteriore: null };
+});
+
+/* =========================================================
+   PROFILO — FOTO UPLOAD PREVIEW
+========================================================= */
+function setupFotoInput(inputId, prevId, areaId, key) {
+  const input = document.getElementById(inputId);
+  input.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    fotoFiles[key] = file;
+    const prev = document.getElementById(prevId);
+    const area = document.getElementById(areaId);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      prev.src = ev.target.result;
+      prev.style.display = 'block';
+      area.querySelector('.foto-icon').style.display = 'none';
+      area.querySelector('.foto-label').style.display = 'none';
+      area.querySelector('.foto-sublabel').style.display = 'none';
+      area.classList.add('has-photo');
+    };
+    reader.readAsDataURL(file);
+    aggiornaStatoFoto();
+  });
+}
+
+setupFotoInput('input-frontale', 'prev-frontale', 'area-frontale', 'frontale');
+setupFotoInput('input-laterale', 'prev-laterale', 'area-laterale', 'laterale');
+setupFotoInput('input-posteriore', 'prev-posteriore', 'area-posteriore', 'posteriore');
+
+function aggiornaStatoFoto() {
+  const count = [fotoFiles.frontale, fotoFiles.laterale, fotoFiles.posteriore].filter(Boolean).length;
+  const status = document.getElementById('foto-status');
+  const btn = document.getElementById('btn-genera-assessment');
+  if (count === 3) {
+    status.textContent = '✓ Tutte e tre le foto caricate';
+    status.style.color = '#2d5a3d';
+    btn.disabled = false;
+  } else {
+    status.textContent = `${count}/3 foto caricate`;
+    status.style.color = '#8a7355';
+    btn.disabled = true;
+  }
+}
+
+/* =========================================================
+   PROFILO — UPLOAD SU CLOUDINARY
+========================================================= */
+async function uploadFoto(file, nome) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+  formData.append('public_id', `coach_${Date.now()}_${nome}`);
+  const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+  const data = await res.json();
+  return data.secure_url;
+}
+
+/* =========================================================
+   PROFILO — SPINNER MESSAGGI
+========================================================= */
+const spinnerMsgs = [
+  'Sto analizzando la tua postura...',
+  'Calcolo il tuo somatotipo...',
+  'Valuto la composizione corporea...',
+  'Genero il tuo piano personalizzato...',
+  'Quasi pronto...'
+];
+
+function mostraSpinner() {
+  const overlay = document.getElementById('spinner-overlay');
+  overlay.classList.add('active');
+  let i = 0;
+  const msg = document.getElementById('spinner-msg');
+  msg.textContent = spinnerMsgs[0];
+  const interval = setInterval(() => {
+    i = (i + 1) % spinnerMsgs.length;
+    msg.textContent = spinnerMsgs[i];
+  }, 2500);
+  return interval;
+}
+
+function nascondiSpinner(interval) {
+  clearInterval(interval);
+  document.getElementById('spinner-overlay').classList.remove('active');
+}
+
+/* =========================================================
+   PROFILO — GENERA ASSESSMENT
+========================================================= */
+document.getElementById('btn-genera-assessment').addEventListener('click', async () => {
+  const interval = mostraSpinner();
+
+  try {
+    // 1. Upload foto su Cloudinary
+    const [urlFrontale, urlLaterale, urlPosteriore] = await Promise.all([
+      uploadFoto(fotoFiles.frontale, 'frontale'),
+      uploadFoto(fotoFiles.laterale, 'laterale'),
+      uploadFoto(fotoFiles.posteriore, 'posteriore')
+    ]);
+
+    // 2. Leggi dati diario per IAM
+    const diarioDati = await caricaDiario();
+    const ultimi30 = diarioDati.slice(0, 30);
+    const mediaEmotivo = ultimi30.length > 0
+      ? (ultimi30.reduce((s, v) => s + (v.emotivo || 3), 0) / ultimi30.length).toFixed(1)
+      : '3.0';
+    const mediaEnergia = ultimi30.length > 0
+      ? (ultimi30.reduce((s, v) => s + (v.energia || 3), 0) / ultimi30.length).toFixed(1)
+      : '3.0';
+
+    // 3. Chiama Claude API
+    const prompt = `Sei un AI Personal Trainer e Coach esperto in body assessment. Analizza le seguenti tre foto corporee e i parametri forniti per generare un assessment completo.
+
+PARAMETRI UTENTE:
+- Peso: ${parametriSalvati.peso}kg, Altezza: ${parametriSalvati.altezza}cm, Età: ${parametriSalvati.eta} anni, Sesso: ${parametriSalvati.sesso}
+- Misure: Vita ${parametriSalvati.vita}cm, Fianchi ${parametriSalvati.fianchi}cm, Petto ${parametriSalvati.petto}cm, Coscia dx ${parametriSalvati.coscia_dx}cm
+- Obiettivo: ${parametriSalvati.obiettivo}
+- Attrezzatura: ${parametriSalvati.attrezzatura}
+- Livello: ${parametriSalvati.livello}
+- Limitazioni fisiche: ${parametriSalvati.limitazioni || 'nessuna'}
+- Preferenze alimentari: ${parametriSalvati.preferenze_alimentari || 'nessuna'}
+- Media stato emotivo (ultimi 30 giorni): ${mediaEmotivo}/5
+- Media energia (ultimi 30 giorni): ${mediaEnergia}/5
+
+FOTO: frontale (${urlFrontale}), laterale (${urlLaterale}), posteriore (${urlPosteriore})
+
+Rispondi SOLO con un oggetto JSON valido senza markdown, con questa struttura esatta:
+{
+  "somatotipo": "classificazione e descrizione in 3-4 frasi",
+  "postura": "valutazione sui tre piani (frontale, laterale, posteriore) in 4-5 frasi",
+  "iam": "sostenibile",
+  "iam_desc": "spiegazione dell'indice di aderenza mentale in 2-3 frasi",
+  "piano_allenamento": "piano settimanale dettagliato con esercizi, serie e ripetizioni in 8-10 frasi",
+  "piano_dieta": "piano nutrizionale con TDEE, macros e esempi pasti in 8-10 frasi",
+  "proiezione": "proiezione realistica a 12 settimane con numeri concreti in 4-5 frasi"
+}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const testo = data.content[0].text;
+    const clean = testo.replace(/```json|```/g, '').trim();
+    const report = JSON.parse(clean);
+
+    // 4. Salva su JSONBin
+    const rawBin = await binGet(BIN_ALLENAMENTO);
+    let binData = {};
+    try { binData = rawBin ? JSON.parse(rawBin) : {}; } catch(e) {}
+
+    binData.assessment = {
+      completato: true,
+      data: new Date().toISOString().slice(0, 10),
+      parametri: parametriSalvati,
+      foto: { frontale: urlFrontale, laterale: urlLaterale, posteriore: urlPosteriore },
+      report: report
+    };
+
+    await binSet(BIN_ALLENAMENTO, JSON.stringify(binData));
+
+    nascondiSpinner(interval);
+    mostraReport(binData.assessment);
+
+  } catch(err) {
+    nascondiSpinner(interval);
+    console.error('Assessment error:', err);
+    alert('Errore durante la generazione dell\'assessment. Riprova.');
+  }
+});
+
+/* =========================================================
+   PROFILO — MOSTRA REPORT
+========================================================= */
+function mostraReport(assessment) {
+  document.getElementById('profilo-benvenuto').style.display = 'none';
+  document.getElementById('profilo-form').style.display = 'none';
+  document.getElementById('profilo-foto').style.display = 'none';
+  document.getElementById('profilo-report').style.display = 'block';
+
+  const r = assessment.report;
+  document.getElementById('report-somatotipo-title').textContent = r.somatotipo ? r.somatotipo.split('.')[0] : 'Il tuo profilo';
+  document.getElementById('report-data-label').textContent = 'Assessment del ' + (assessment.data || '');
+  document.getElementById('r-somatotipo').textContent = r.somatotipo || '';
+  document.getElementById('r-postura').textContent = r.postura || '';
+  document.getElementById('r-iam').textContent = `Livello: ${(r.iam || '').toUpperCase()}\n\n${r.iam_desc || ''}`;
+  document.getElementById('r-piano').textContent = r.piano_allenamento || '';
+  document.getElementById('r-dieta').textContent = r.piano_dieta || '';
+  document.getElementById('r-proiezione').textContent = r.proiezione || '';
+}
+
+/* =========================================================
+   PROFILO — TOGGLE REPORT SEZIONI
+========================================================= */
+function toggleReport(id) {
+  const body = document.getElementById(id);
+  const chev = document.getElementById('chev-' + id);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (chev) chev.classList.toggle('open', !isOpen);
+}
+</script>
+</body>
+</html>
