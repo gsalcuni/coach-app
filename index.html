@@ -1404,31 +1404,19 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
     console.log('IAM media emotivo:', mediaEmotivo, 'energia:', mediaEnergia);
 
     // 3. Chiama Claude API
-    const prompt = `Sei un AI Personal Trainer e Coach esperto in body assessment. Analizza le seguenti tre foto corporee e i parametri forniti per generare un assessment completo.
+    const prompt = `Sei un AI Personal Trainer esperto. Analizza queste foto corporee e dati per generare un assessment. Rispondi SOLO con JSON valido, nessun markdown.
 
-PARAMETRI UTENTE:
-- Peso: ${parametriSalvati.peso}kg, Altezza: ${parametriSalvati.altezza}cm, Età: ${parametriSalvati.eta} anni, Sesso: ${parametriSalvati.sesso}
-- Misure: Vita ${parametriSalvati.vita}cm, Fianchi ${parametriSalvati.fianchi}cm, Petto ${parametriSalvati.petto}cm, Coscia dx ${parametriSalvati.coscia_dx}cm
-- Obiettivo: ${parametriSalvati.obiettivo}
-- Attrezzatura: ${parametriSalvati.attrezzatura}
-- Livello: ${parametriSalvati.livello}
-- Limitazioni fisiche: ${parametriSalvati.limitazioni || 'nessuna'}
-- Preferenze alimentari: ${parametriSalvati.preferenze_alimentari || 'nessuna'}
-- Media stato emotivo (ultimi 30 giorni): ${mediaEmotivo}/5
-- Media energia (ultimi 30 giorni): ${mediaEnergia}/5
+DATI:
+Peso:${parametriSalvati.peso}kg, Altezza:${parametriSalvati.altezza}cm, Età:${parametriSalvati.eta}, Sesso:${parametriSalvati.sesso}
+Misure: Vita ${parametriSalvati.vita}cm, Fianchi ${parametriSalvati.fianchi}cm, Petto ${parametriSalvati.petto}cm, Coscia dx ${parametriSalvati.coscia_dx}cm
+Obiettivo:${parametriSalvati.obiettivo}, Attrezzatura:${parametriSalvati.attrezzatura}, Livello:${parametriSalvati.livello}
+Limitazioni:${parametriSalvati.limitazioni||'nessuna'}, Preferenze alimentari:${parametriSalvati.preferenze_alimentari||'nessuna'}
+Stato emotivo medio:${mediaEmotivo}/5, Energia media:${mediaEnergia}/5
 
-FOTO: frontale (${urlFrontale}), laterale (${urlLaterale}), posteriore (${urlPosteriore})
+FOTO: frontale=${urlFrontale} laterale=${urlLaterale} posteriore=${urlPosteriore}
 
-Rispondi SOLO con un oggetto JSON valido senza markdown, con questa struttura esatta:
-{
-  "somatotipo": "classificazione e descrizione in 3-4 frasi",
-  "postura": "valutazione sui tre piani (frontale, laterale, posteriore) in 4-5 frasi",
-  "iam": "sostenibile",
-  "iam_desc": "spiegazione dell'indice di aderenza mentale in 2-3 frasi",
-  "piano_allenamento": "piano settimanale dettagliato con esercizi, serie e ripetizioni in 8-10 frasi",
-  "piano_dieta": "piano nutrizionale con TDEE, macros e esempi pasti in 8-10 frasi",
-  "proiezione": "proiezione realistica a 12 settimane con numeri concreti in 4-5 frasi"
-}`;
+Rispondi con questo JSON esatto:
+{"somatotipo":"classificazione e descrizione breve","postura":"valutazione sui 3 piani in 3 frasi","iam":"sostenibile","iam_desc":"spiegazione breve IAM","piano_allenamento":"piano settimanale con esercizi e serie","piano_dieta":"piano nutrizionale con TDEE e macros","proiezione":"proiezione 12 settimane con numeri"}`;
 
     const res = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
