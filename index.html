@@ -1403,42 +1403,61 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
     }
     console.log('IAM media emotivo:', mediaEmotivo, 'energia:', mediaEnergia);
 
-    // 3. Chiama Claude API
-    const prompt = `Sei un AI Personal Trainer esperto. Analizza queste foto corporee e dati per generare un assessment. Rispondi SOLO con JSON valido, nessun markdown.
-
-DATI:
-Peso:${parametriSalvati.peso}kg, Altezza:${parametriSalvati.altezza}cm, Età:${parametriSalvati.eta}, Sesso:${parametriSalvati.sesso}
-Misure: Vita ${parametriSalvati.vita}cm, Fianchi ${parametriSalvati.fianchi}cm, Petto ${parametriSalvati.petto}cm, Coscia dx ${parametriSalvati.coscia_dx}cm
-Obiettivo:${parametriSalvati.obiettivo}, Attrezzatura:${parametriSalvati.attrezzatura}, Livello:${parametriSalvati.livello}
-Limitazioni:${parametriSalvati.limitazioni||'nessuna'}, Preferenze alimentari:${parametriSalvati.preferenze_alimentari||'nessuna'}
-Stato emotivo medio:${mediaEmotivo}/5, Energia media:${mediaEnergia}/5
-
-FOTO: frontale=${urlFrontale} laterale=${urlLaterale} posteriore=${urlPosteriore}
-
-Rispondi con questo JSON esatto:
-{"somatotipo":"classificazione e descrizione breve","postura":"valutazione sui 3 piani in 3 frasi","iam":"sostenibile","iam_desc":"spiegazione breve IAM","piano_allenamento":"piano settimanale con esercizi e serie","piano_dieta":"piano nutrizionale con TDEE e macros","proiezione":"proiezione 12 settimane con numeri"}`;
-
-    const res = await fetch('/.netlify/functions/claude-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    const data = await res.json();
-    console.log('Proxy response status:', res.status);
-    console.log('Proxy response data:', JSON.stringify(data).slice(0, 500));
-    console.log('Proxy response status:', res.status);
-    console.log('Proxy response data:', JSON.stringify(data).slice(0, 300));
-    if (!data.content || !data.content[0]) {
-      throw new Error('Risposta proxy non valida: ' + JSON.stringify(data).slice(0, 200));
+    // 3. Chiama Claude API — 4 chiamate separate
+    async function fileToBase64(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+        reader.readAsDataURL(file);
+      });
     }
-    const testo = data.content[0].text;
-    const clean = testo.replace(/```json|```/g, '').trim();
-    const report = JSON.parse(clean);
+
+    async function callClaude(messages) {
+      const r = await fetch('/.netlify/functions/claude-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages })
+      });
+      const d = await r.json();
+      if (!d.content || !d.content[0]) throw new Error('Proxy error: ' + JSON.stringify(d).slice(0,200));
+      return d.content[0].text;
+    }
+
+    document.getElementById('spinner-msg').textContent = 'Elaboro le foto...';
+    const [b64front, b64lat, b64post] = await Promise.all([
+      fileToBase64(fotoFiles.frontale),
+      fileToBase64(fotoFiles.laterale),
+      fileToBase64(fotoFiles.posteriore)
+    ]);
+
+    const params = `Peso:${parametriSalvati.peso}kg Altezza:${parametriSalvati.altezza}cm Età:${parametriSalvati.eta} Sesso:${parametriSalvati.sesso} Vita:${parametriSalvati.vita}cm Fianchi:${parametriSalvati.fianchi}cm Petto:${parametriSalvati.petto}cm CosciaDx:${parametriSalvati.coscia_dx}cm BMI:${(parametriSalvati.peso/((parametriSalvati.altezza/100)**2)).toFixed(1)} Obiettivo:${parametriSalvati.obiettivo} Limitazioni:${parametriSalvati.limitazioni||'nessuna'}`;
+
+    // CHIAMATA 1 — Somatotipo e postura dalle foto
+    document.getElementById('spinner-msg').textContent = 'Analizzo la tua postura...';
+    const t1 = await callClaude([{ role: 'user', content: [
+      { type: 'image', source: { type: 'base64', media_type: fotoFiles.frontale.type||'image/jpeg', data: b64front }},
+      { type: 'image', source: { type: 'base64', media_type: fotoFiles.laterale.type||'image/jpeg', data: b64lat }},
+      { type: 'image', source: { type: 'base64', media_type: fotoFiles.posteriore.type||'image/jpeg', data: b64post }},
+      { type: 'text', text: `Sei un AI Personal Trainer. Analizza queste 3 foto (frontale, laterale, posteriore) e i dati: ${params}. Rispondi SOLO con JSON senza markdown: {"somatotipo":"classificazione e descrizione","postura":"valutazione 3 piani in 3 frasi","iam":"sostenibile","iam_desc":"spiegazione IAM"}` }
+    ]}]);
+    const r1 = JSON.parse(t1.replace(/```json|```/g,'').trim());
+
+    // CHIAMATA 2 — Piano allenamento
+    document.getElementById('spinner-msg').textContent = 'Genero il piano di allenamento...';
+    const t2 = await callClaude([{ role: 'user', content: `AI Personal Trainer. Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello} Somatotipo:${r1.somatotipo}. Piano Push/Pull/Total Body con esercizi serie rip. Rispondi SOLO JSON: {"piano_allenamento":"piano dettagliato"}` }]);
+    const r2 = JSON.parse(t2.replace(/```json|```/g,'').trim());
+
+    // CHIAMATA 3 — Piano dieta
+    document.getElementById('spinner-msg').textContent = 'Genero il piano nutrizionale...';
+    const t3 = await callClaude([{ role: 'user', content: `AI Personal Trainer. Dati: ${params} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'} StatoEmotivo:${mediaEmotivo}/5. Calcola TDEE Mifflin-St Jeor x1.55, macros ON/OFF, esempi pasti. Rispondi SOLO JSON: {"piano_dieta":"piano con TDEE e macros"}` }]);
+    const r3 = JSON.parse(t3.replace(/```json|```/g,'').trim());
+
+    // CHIAMATA 4 — Proiezione
+    document.getElementById('spinner-msg').textContent = 'Calcolo la proiezione 12 settimane...';
+    const t4 = await callClaude([{ role: 'user', content: `AI Personal Trainer. Dati: ${params} IAM:${r1.iam}. Proiezione realistica 12 settimane con numeri su peso misure performance. Rispondi SOLO JSON: {"proiezione":"proiezione con numeri concreti"}` }]);
+    const r4 = JSON.parse(t4.replace(/```json|```/g,'').trim());
+
+    const report = { ...r1, ...r2, ...r3, ...r4 };
 
     // 4. Salva su JSONBin
     const rawBin = await binGet(BIN_ALLENAMENTO);
