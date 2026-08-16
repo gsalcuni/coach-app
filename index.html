@@ -1374,14 +1374,19 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
     // 1. Upload foto su Cloudinary
     console.log('Inizio upload foto Cloudinary...');
     console.log('File frontale:', fotoFiles.frontale?.name, fotoFiles.frontale?.size);
-    console.log('File laterale:', fotoFiles.laterale?.name, fotoFiles.laterale?.size);
-    console.log('File posteriore:', fotoFiles.posteriore?.name, fotoFiles.posteriore?.size);
     
-    const [urlFrontale, urlLaterale, urlPosteriore] = await Promise.all([
-      uploadFoto(fotoFiles.frontale, 'frontale'),
-      uploadFoto(fotoFiles.laterale, 'laterale'),
-      uploadFoto(fotoFiles.posteriore, 'posteriore')
-    ]);
+    let urlFrontale, urlLaterale, urlPosteriore;
+    try {
+      [urlFrontale, urlLaterale, urlPosteriore] = await Promise.all([
+        uploadFoto(fotoFiles.frontale, 'frontale'),
+        uploadFoto(fotoFiles.laterale, 'laterale'),
+        uploadFoto(fotoFiles.posteriore, 'posteriore')
+      ]);
+      console.log('Upload completato:', urlFrontale, urlLaterale, urlPosteriore);
+    } catch(uploadErr) {
+      console.error('Errore upload Cloudinary:', uploadErr);
+      throw uploadErr;
+    }
 
     // 2. Leggi dati diario per IAM
     let mediaEmotivo = '3.0';
