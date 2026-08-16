@@ -1422,6 +1422,8 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
       if (match) return JSON.parse(match[0]);
       throw new Error('JSON non trovato in: ' + text.slice(0,200));
     }
+
+    async function callClaude(messages) {
       const r = await fetch('/.netlify/functions/claude-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
