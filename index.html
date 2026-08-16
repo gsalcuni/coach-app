@@ -1443,6 +1443,11 @@ Rispondi SOLO con un oggetto JSON valido senza markdown, con questa struttura es
     const data = await res.json();
     console.log('Proxy response status:', res.status);
     console.log('Proxy response data:', JSON.stringify(data).slice(0, 500));
+    console.log('Proxy response status:', res.status);
+    console.log('Proxy response data:', JSON.stringify(data).slice(0, 300));
+    if (!data.content || !data.content[0]) {
+      throw new Error('Risposta proxy non valida: ' + JSON.stringify(data).slice(0, 200));
+    }
     const testo = data.content[0].text;
     const clean = testo.replace(/```json|```/g, '').trim();
     const report = JSON.parse(clean);
