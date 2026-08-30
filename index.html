@@ -1443,30 +1443,49 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
 
     const params = `Peso:${parametriSalvati.peso}kg Altezza:${parametriSalvati.altezza}cm Età:${parametriSalvati.eta} Sesso:${parametriSalvati.sesso} Vita:${parametriSalvati.vita}cm Fianchi:${parametriSalvati.fianchi}cm Petto:${parametriSalvati.petto}cm CosciaDx:${parametriSalvati.coscia_dx}cm BMI:${(parametriSalvati.peso/((parametriSalvati.altezza/100)**2)).toFixed(1)} Obiettivo:${parametriSalvati.obiettivo} Limitazioni:${parametriSalvati.limitazioni||'nessuna'}`;
 
-    // CHIAMATA 1 — Somatotipo e postura dalle foto
+    // CHIAMATA 1 — Somatotipo e postura dalle foto (testo libero)
     document.getElementById('spinner-msg').textContent = 'Analizzo la tua postura...';
     const t1 = await callClaude([{ role: 'user', content: [
       { type: 'image', source: { type: 'base64', media_type: fotoFiles.frontale.type||'image/jpeg', data: b64front }},
       { type: 'image', source: { type: 'base64', media_type: fotoFiles.laterale.type||'image/jpeg', data: b64lat }},
       { type: 'image', source: { type: 'base64', media_type: fotoFiles.posteriore.type||'image/jpeg', data: b64post }},
-      { type: 'text', text: `Sei un AI Personal Trainer. Analizza queste 3 foto (frontale, laterale, posteriore) e i dati: ${params}. Rispondi SOLO con JSON senza markdown: {"somatotipo":"classificazione e descrizione","postura":"valutazione 3 piani in 3 frasi","iam":"sostenibile","iam_desc":"spiegazione IAM"}` }
+      { type: 'text', text: `Analizza queste 3 foto corporee. Dati: ${params}. Rispondi con 4 righe numerate ESATTAMENTE cosi senza virgolette nei valori:
+1. SOMATOTIPO: una frase breve sulla classificazione
+2. POSTURA: una frase breve sulla postura
+3. IAM: sostenibile
+4. IAM_DESC: una frase breve` }
     ]}]);
-    const r1 = parseJSON(t1);
+    const lines1 = t1.split('\n').filter(l => l.trim());
+    const getVal = (lines, prefix) => {
+      const line = lines.find(l => l.toUpperCase().includes(prefix.toUpperCase()));
+      if (!line) return '';
+      const idx = line.indexOf(':');
+      return idx >= 0 ? line.slice(idx+1).trim() : '';
+    };
+    const r1 = {
+      somatotipo: getVal(lines1, 'SOMATOTIPO') || 'Ecto-mesomorfo',
+      postura: getVal(lines1, 'POSTURA') || 'Postura da valutare',
+      iam: (getVal(lines1, 'IAM:') || 'sostenibile').toLowerCase().replace(/[^a-z]/g,'').replace('desc','') || 'sostenibile',
+      iam_desc: getVal(lines1, 'IAM_DESC') || 'Piano sostenibile raccomandato'
+    };
 
-    // CHIAMATA 2 — Piano allenamento
+    // CHIAMATA 2 — Piano allenamento (testo libero)
     document.getElementById('spinner-msg').textContent = 'Genero il piano di allenamento...';
-    const t2 = await callClaude([{ role: 'user', content: `AI Personal Trainer. Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello} Somatotipo:${r1.somatotipo}. Piano Push/Pull/Total Body con esercizi serie rip. Rispondi SOLO JSON: {"piano_allenamento":"piano dettagliato"}` }]);
-    const r2 = parseJSON(t2);
+    const t2 = await callClaude([{ role: 'user', content: `Sei un personal trainer. Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello}. Scrivi un piano Push Pull Total Body con esercizi serie ripetizioni. Rispondi con UNA SOLA RIGA che inizia con PIANO: seguita dal testo del piano usando il punto e virgola come separatore tra gli esercizi.` }]);
+    const pianoLine = t2.split('\n').find(l => l.toUpperCase().includes('PIANO:')) || t2.split('\n')[0];
+    const r2 = { piano_allenamento: pianoLine.replace(/^PIANO:/i,'').trim() || t2.trim() };
 
-    // CHIAMATA 3 — Piano dieta
+    // CHIAMATA 3 — Piano dieta (testo libero)
     document.getElementById('spinner-msg').textContent = 'Genero il piano nutrizionale...';
-    const t3 = await callClaude([{ role: 'user', content: `AI Personal Trainer. Dati: ${params} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'} StatoEmotivo:${mediaEmotivo}/5. Calcola TDEE Mifflin-St Jeor x1.55, macros ON/OFF, esempi pasti. Rispondi SOLO JSON: {"piano_dieta":"piano con TDEE e macros"}` }]);
-    const r3 = parseJSON(t3);
+    const t3 = await callClaude([{ role: 'user', content: `Sei un nutrizionista. Dati: ${params} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}. Calcola TDEE Mifflin-St Jeor x1.55 e macros per giorno allenamento e riposo. Rispondi con UNA SOLA RIGA che inizia con DIETA: seguita dal testo usando punto e virgola come separatore.` }]);
+    const dietaLine = t3.split('\n').find(l => l.toUpperCase().includes('DIETA:')) || t3.split('\n')[0];
+    const r3 = { piano_dieta: dietaLine.replace(/^DIETA:/i,'').trim() || t3.trim() };
 
-    // CHIAMATA 4 — Proiezione
+    // CHIAMATA 4 — Proiezione (testo libero)
     document.getElementById('spinner-msg').textContent = 'Calcolo la proiezione 12 settimane...';
-    const t4 = await callClaude([{ role: 'user', content: `AI Personal Trainer. Dati: ${params} IAM:${r1.iam}. Proiezione realistica 12 settimane con numeri su peso misure performance. Rispondi SOLO JSON: {"proiezione":"proiezione con numeri concreti"}` }]);
-    const r4 = parseJSON(t4);
+    const t4 = await callClaude([{ role: 'user', content: `Sei un personal trainer. Dati: ${params} IAM:${r1.iam}. Scrivi una proiezione realistica a 12 settimane con numeri su peso misure e forza. Rispondi con UNA SOLA RIGA che inizia con PROIEZIONE: seguita dal testo usando punto e virgola come separatore.` }]);
+    const proiLine = t4.split('\n').find(l => l.toUpperCase().includes('PROIEZIONE:')) || t4.split('\n')[0];
+    const r4 = { proiezione: proiLine.replace(/^PROIEZIONE:/i,'').trim() || t4.trim() };
 
     const report = { ...r1, ...r2, ...r3, ...r4 };
 
