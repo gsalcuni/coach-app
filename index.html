@@ -509,6 +509,15 @@
       </div>
 
       <button class="profilo-btn-secondary" id="btn-nuovo-assessment" style="margin-top:8px;">Rifai assessment</button>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e0d9c8;">
+        <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8a7355;margin-bottom:10px;font-weight:600;">📥 Scarica Documenti</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onclick="scaricaDoc('assessment')" style="width:100%;padding:10px;border-radius:6px;border:1px solid #d8cfba;background:#fff;font-size:12px;font-weight:600;color:#1a2b3a;cursor:pointer;text-align:left;">📄 Assessment Completo</button>
+          <button onclick="scaricaDoc('allenamento')" style="width:100%;padding:10px;border-radius:6px;border:1px solid #d8cfba;background:#fff;font-size:12px;font-weight:600;color:#1a2b3a;cursor:pointer;text-align:left;">🏋 Piano di Allenamento</button>
+          <button onclick="scaricaDoc('nutrizione')" style="width:100%;padding:10px;border-radius:6px;border:1px solid #d8cfba;background:#fff;font-size:12px;font-weight:600;color:#1a2b3a;cursor:pointer;text-align:left;">🍽 Piano Nutrizionale</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1659,7 +1668,173 @@ function mostraReport(assessment) {
       </div>
     </div>`;
   }
-  document.getElementById('r-proiezione').innerHTML += fotoHtml;
+  // Popola tab Nutrizione con dati assessment
+  if (r.piano_dieta) popolaTabNutrizioneAssessment(r.piano_dieta, assessment.parametri);
+
+  // Popola tab Allenamento con piano assessment
+  if (r.piano_allenamento) popolaTabAllenamentoAssessment(r.piano_allenamento);
+}
+
+/* =========================================================
+   POPOLA TAB NUTRIZIONE DA ASSESSMENT
+========================================================= */
+function popolaTabNutrizioneAssessment(dietaTesto, params) {
+  if (!params) return;
+  const peso = params.peso || 80;
+  const altezza = params.altezza || 175;
+  const eta = params.eta || 40;
+
+  // Mifflin-St Jeor x1.55
+  const bmr = 10 * peso + 6.25 * altezza - 5 * eta + 5;
+  const tdeeAllen = Math.round(bmr * 1.55);
+  const tdeeRiposo = Math.round(bmr * 1.2);
+
+  // Aggiorna i campi input con i parametri dell'assessment
+  const pesoInput = document.getElementById('peso');
+  const altezzaInput = document.getElementById('altezza');
+  const etaInput = document.getElementById('eta');
+  if (pesoInput) pesoInput.value = peso;
+  if (altezzaInput) altezzaInput.value = altezza;
+  if (etaInput) etaInput.value = eta;
+
+  // Forza ricalcolo macros
+  if (typeof aggiornaCalorie === 'function') aggiornaCalorie();
+}
+
+/* =========================================================
+   POPOLA TAB ALLENAMENTO DA ASSESSMENT
+========================================================= */
+function popolaTabAllenamentoAssessment(pianoTesto) {
+  // Estrai esercizi per sessione dal testo strutturato
+  const sessioni = {};
+  const lines = pianoTesto.split('\n').filter(l => l.trim());
+  let currentKey = null;
+
+  lines.forEach(line => {
+    const colonIdx = line.indexOf(':');
+    if (colonIdx < 0) return;
+    const key = line.slice(0, colonIdx).trim().toUpperCase();
+    const val = line.slice(colonIdx + 1).trim();
+    if (['CORE', 'PUSH', 'PULL', 'TOTAL_BODY', 'NOTE'].includes(key)) {
+      currentKey = key;
+      sessioni[key] = val.split(';').map(s => s.trim()).filter(Boolean);
+    }
+  });
+
+  // Mostra banner nel tab allenamento
+  const eserciziList = document.getElementById('esercizi-list');
+  if (!eserciziList) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'assessment-banner';
+  banner.style.cssText = 'background:#f0f7f2;border:1px solid #6b8e7a;border-radius:8px;padding:12px 14px;margin-bottom:12px;';
+  banner.innerHTML = `
+    <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#6b8e7a;font-weight:700;margin-bottom:4px;">📋 Piano da Assessment AI</div>
+    <div style="font-size:12px;color:#1a2b3a;">Il piano è stato generato dall'assessment. Registra i tuoi carichi nel log qui sotto.</div>
+  `;
+
+  const existing = document.getElementById('assessment-banner');
+  if (existing) existing.remove();
+  eserciziList.insertBefore(banner, eserciziList.firstChild);
+}
+
+/* =========================================================
+   DOWNLOAD DOCUMENTI
+========================================================= */
+function scaricaDocumento(tipo, assessment) {
+  const r = assessment.report;
+  const p = assessment.parametri || {};
+  let contenuto = '';
+  let nomeFile = '';
+
+  if (tipo === 'assessment') {
+    nomeFile = 'Assessment_Completo.txt';
+    contenuto = `IL TUO COACH — ASSESSMENT COMPLETO
+Data: ${assessment.data}
+=====================================
+
+PARAMETRI
+Peso: ${p.peso}kg | Altezza: ${p.altezza}cm | Età: ${p.eta} anni
+Obiettivo: ${p.obiettivo} | Livello: ${p.livello}
+Limitazioni: ${p.limitazioni || 'nessuna'}
+Preferenze alimentari: ${p.preferenze_alimentari || 'nessuna'}
+
+=====================================
+SOMATOTIPO
+${r.somatotipo}
+
+=====================================
+VALUTAZIONE POSTURALE
+${r.postura}
+
+=====================================
+INDICE DI ADERENZA MENTALE
+Livello: ${(r.iam||'').toUpperCase()}
+${r.iam_desc}
+
+=====================================
+PROIEZIONE 12 SETTIMANE
+${(r.proiezione||'').split(';').join('\n')}
+
+=====================================
+FOTO ASSESSMENT
+Frontale: ${assessment.foto?.frontale || 'non disponibile'}
+Laterale: ${assessment.foto?.laterale || 'non disponibile'}
+Posteriore: ${assessment.foto?.posteriore || 'non disponibile'}
+`;
+  } else if (tipo === 'allenamento') {
+    nomeFile = 'Piano_Allenamento.txt';
+    contenuto = `IL TUO COACH — PIANO DI ALLENAMENTO
+Data: ${assessment.data}
+=====================================
+
+${(r.piano_allenamento||'').split('\n').map(l => {
+  const colonIdx = l.indexOf(':');
+  if (colonIdx < 0) return l;
+  const key = l.slice(0, colonIdx).trim().toUpperCase();
+  const val = l.slice(colonIdx + 1).trim();
+  const labels = { 'CORE': '=== CORE (Prima di ogni sessione) ===', 'PUSH': '=== PUSH ===', 'PULL': '=== PULL ===', 'TOTAL_BODY': '=== TOTAL BODY ===', 'NOTE': '=== NOTE ===' };
+  if (labels[key]) return `\n${labels[key]}\n${val.split(';').map(e => '• ' + e.trim()).join('\n')}`;
+  return l;
+}).join('\n')}
+`;
+  } else if (tipo === 'nutrizione') {
+    nomeFile = 'Piano_Nutrizionale.txt';
+    contenuto = `IL TUO COACH — PIANO NUTRIZIONALE
+Data: ${assessment.data}
+=====================================
+
+TARGET GIORNALIERO
+${(r.piano_dieta||'').split('\n').join('\n')}
+
+=====================================
+DISTRIBUZIONE PASTI
+${(r.distribuzione_pasti||'Non disponibile - rifai l\'assessment per generarla').split('\n').join('\n')}
+`;
+  }
+
+  const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeFile;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function scaricaDoc(tipo) {
+  try {
+    const raw = await binGet(BIN_ALLENAMENTO);
+    const data = raw ? JSON.parse(raw) : {};
+    if (data.assessment && data.assessment.completato) {
+      scaricaDocumento(tipo, data.assessment);
+    } else {
+      alert('Nessun assessment trovato. Esegui prima l\'assessment.');
+    }
+  } catch(e) {
+    console.error('Errore download:', e);
+    alert('Errore nel download. Riprova.');
+  }
 }
 
 /* =========================================================
