@@ -1340,8 +1340,9 @@ async function uploadFoto(file, nome) {
 const spinnerMsgs = [
   'Sto analizzando la tua postura...',
   'Calcolo il tuo somatotipo...',
-  'Valuto la composizione corporea...',
-  'Genero il tuo piano personalizzato...',
+  'Genero il piano di allenamento...',
+  'Calcolo i macronutrienti...',
+  'Distribuisco i pasti...',
   'Quasi pronto...'
 ];
 
@@ -1468,25 +1469,47 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
       iam_desc: getVal(lines1, 'IAM_DESC') || 'Piano sostenibile raccomandato'
     };
 
-    // CHIAMATA 2 — Piano allenamento (testo libero)
+    // CHIAMATA 2 — Piano allenamento con sessioni separate
     document.getElementById('spinner-msg').textContent = 'Genero il piano di allenamento...';
-    const t2 = await callClaude([{ role: 'user', content: `Sei un personal trainer. Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello}. Scrivi un piano Push Pull Total Body con esercizi serie ripetizioni. Rispondi con UNA SOLA RIGA che inizia con PIANO: seguita dal testo del piano usando il punto e virgola come separatore tra gli esercizi.` }]);
-    const pianoLine = t2.split('\n').find(l => l.toUpperCase().includes('PIANO:')) || t2.split('\n')[0];
-    const r2 = { piano_allenamento: pianoLine.replace(/^PIANO:/i,'').trim() || t2.trim() };
+    const t2 = await callClaude([{ role: 'user', content: `Sei un personal trainer. Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello} Limitazioni:${parametriSalvati.limitazioni||'nessuna'}.
+Scrivi il piano di allenamento con questo formato ESATTO su righe separate:
+CORE: esercizio1 serie x rip; esercizio2 serie x rip; esercizio3 serie x rip
+PUSH: esercizio1 serie x rip; esercizio2 serie x rip; esercizio3 serie x rip
+PULL: esercizio1 serie x rip; esercizio2 serie x rip; esercizio3 serie x rip
+TOTAL_BODY: esercizio1 serie x rip; esercizio2 serie x rip; esercizio3 serie x rip
+NOTE: nota1; nota2; nota3` }]);
+    const r2 = { piano_allenamento: t2.trim() };
 
-    // CHIAMATA 3 — Piano dieta (testo libero)
+    // CHIAMATA 3 — Piano dieta con TDEE e macros
     document.getElementById('spinner-msg').textContent = 'Genero il piano nutrizionale...';
-    const t3 = await callClaude([{ role: 'user', content: `Sei un nutrizionista. Dati: ${params} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}. Calcola TDEE Mifflin-St Jeor x1.55 e macros per giorno allenamento e riposo. Rispondi con UNA SOLA RIGA che inizia con DIETA: seguita dal testo usando punto e virgola come separatore.` }]);
-    const dietaLine = t3.split('\n').find(l => l.toUpperCase().includes('DIETA:')) || t3.split('\n')[0];
-    const r3 = { piano_dieta: dietaLine.replace(/^DIETA:/i,'').trim() || t3.trim() };
+    const t3 = await callClaude([{ role: 'user', content: `Sei un nutrizionista. Dati: ${params} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}.
+Calcola TDEE Mifflin-St Jeor x1.55. Scrivi con questo formato ESATTO su righe separate:
+TDEE_ALLENAMENTO: Xkcal
+TDEE_RIPOSO: Xkcal
+PROTEINE: Xg
+CARBO_ALLENAMENTO: Xg
+CARBO_RIPOSO: Xg
+GRASSI: Xg` }]);
+    const r3 = { piano_dieta: t3.trim() };
 
-    // CHIAMATA 4 — Proiezione (testo libero)
+    // CHIAMATA 4 — Distribuzione pasti
+    document.getElementById('spinner-msg').textContent = 'Calcolo la distribuzione pasti...';
+    const t4 = await callClaude([{ role: 'user', content: `Sei un nutrizionista. Dati: ${params} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}.
+TDEE giorno allenamento circa 2900kcal, riposo circa 2400kcal. Distribuisci le calorie e macros (P=proteine C=carboidrati G=grassi) nei pasti. Formato ESATTO:
+COLAZIONE: Xkcal P:Xg C:Xg G:Xg
+META_MATTINA: Xkcal P:Xg C:Xg G:Xg
+PRANZO: Xkcal P:Xg C:Xg G:Xg
+META_POMERIGGIO: Xkcal P:Xg C:Xg G:Xg
+CENA: Xkcal P:Xg C:Xg G:Xg` }]);
+    const r4 = { distribuzione_pasti: t4.trim() };
+
+    // CHIAMATA 5 — Proiezione
     document.getElementById('spinner-msg').textContent = 'Calcolo la proiezione 12 settimane...';
-    const t4 = await callClaude([{ role: 'user', content: `Sei un personal trainer. Dati: ${params} IAM:${r1.iam}. Scrivi una proiezione realistica a 12 settimane con numeri su peso misure e forza. Rispondi con UNA SOLA RIGA che inizia con PROIEZIONE: seguita dal testo usando punto e virgola come separatore.` }]);
-    const proiLine = t4.split('\n').find(l => l.toUpperCase().includes('PROIEZIONE:')) || t4.split('\n')[0];
-    const r4 = { proiezione: proiLine.replace(/^PROIEZIONE:/i,'').trim() || t4.trim() };
+    const t5 = await callClaude([{ role: 'user', content: `Sei un personal trainer. Dati: ${params} IAM:${r1.iam}. Scrivi una proiezione realistica a 12 settimane con numeri su peso misure e forza. Rispondi con UNA SOLA RIGA che inizia con PROIEZIONE: seguita dal testo usando punto e virgola come separatore.` }]);
+    const proiLine = t5.split('\n').find(l => l.toUpperCase().includes('PROIEZIONE:')) || t5.split('\n')[0];
+    const r5 = { proiezione: proiLine.replace(/^PROIEZIONE:/i,'').trim() || t5.trim() };
 
-    const report = { ...r1, ...r2, ...r3, ...r4 };
+    const report = { ...r1, ...r2, ...r3, ...r4, ...r5 };
 
     // 4. Salva su JSONBin
     const rawBin = await binGet(BIN_ALLENAMENTO);
@@ -1518,10 +1541,87 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
 ========================================================= */
 function formatTesto(testo) {
   if (!testo) return '';
-  // Converte punto e virgola in righe separate
   return testo.split(';').map(s => s.trim()).filter(Boolean)
     .map(s => `<div style="padding:4px 0;border-bottom:1px solid #f0ede6;font-size:13px;color:#3a4055;line-height:1.5;">${s}</div>`)
     .join('');
+}
+
+function formatPiano(testo) {
+  if (!testo) return '';
+  const sessioni = { 'CORE': '🧘 Core — Prima di ogni sessione', 'PUSH': '💪 Push', 'PULL': '🔄 Pull', 'TOTAL_BODY': '⚡ Total Body', 'NOTE': '📝 Note' };
+  let html = '';
+  const lines = testo.split('\n').filter(l => l.trim());
+  lines.forEach(line => {
+    const colonIdx = line.indexOf(':');
+    if (colonIdx < 0) return;
+    const key = line.slice(0, colonIdx).trim().toUpperCase();
+    const val = line.slice(colonIdx + 1).trim();
+    const label = sessioni[key];
+    if (label) {
+      html += `<div style="margin-top:14px;margin-bottom:6px;font-size:12px;font-weight:700;color:#1a2b3a;letter-spacing:0.06em;text-transform:uppercase;border-bottom:2px solid #1a2b3a;padding-bottom:4px;">${label}</div>`;
+      val.split(';').map(s => s.trim()).filter(Boolean).forEach(esercizio => {
+        html += `<div style="padding:5px 0;border-bottom:1px solid #f0ede6;font-size:13px;color:#3a4055;">• ${esercizio}</div>`;
+      });
+    }
+  });
+  return html || formatTesto(testo);
+}
+
+function formatDieta(dieta, pasti) {
+  if (!dieta && !pasti) return '';
+  let html = '';
+
+  // TDEE e macros
+  if (dieta) {
+    const lines = dieta.split('\n').filter(l => l.trim());
+    const labels = {
+      'TDEE_ALLENAMENTO': '🏋 Giorno Allenamento',
+      'TDEE_RIPOSO': '😴 Giorno Riposo',
+      'PROTEINE': '🥩 Proteine',
+      'CARBO_ALLENAMENTO': '🌾 Carbo Allenamento',
+      'CARBO_RIPOSO': '🌾 Carbo Riposo',
+      'GRASSI': '🥑 Grassi'
+    };
+    html += `<div style="font-size:11px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Target Giornaliero</div>`;
+    lines.forEach(line => {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx < 0) return;
+      const key = line.slice(0, colonIdx).trim().toUpperCase();
+      const val = line.slice(colonIdx + 1).trim();
+      const label = labels[key];
+      if (label) {
+        html += `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0ede6;font-size:13px;"><span style="color:#5a5248;">${label}</span><span style="font-weight:700;color:#1a2b3a;">${val}</span></div>`;
+      }
+    });
+  }
+
+  // Distribuzione pasti
+  if (pasti) {
+    const lines = pasti.split('\n').filter(l => l.trim());
+    const pastiLabels = {
+      'COLAZIONE': '☀️ Colazione',
+      'META_MATTINA': '🍎 Metà Mattina',
+      'PRANZO': '🍽 Pranzo',
+      'META_POMERIGGIO': '🥤 Metà Pomeriggio',
+      'CENA': '🌙 Cena'
+    };
+    html += `<div style="font-size:11px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin:16px 0 8px;">Distribuzione Pasti</div>`;
+    lines.forEach(line => {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx < 0) return;
+      const key = line.slice(0, colonIdx).trim().toUpperCase();
+      const val = line.slice(colonIdx + 1).trim();
+      const label = pastiLabels[key];
+      if (label) {
+        html += `<div style="padding:6px 0;border-bottom:1px solid #f0ede6;">
+          <div style="font-size:12px;font-weight:700;color:#1a2b3a;margin-bottom:2px;">${label}</div>
+          <div style="font-size:12px;color:#5a5248;">${val}</div>
+        </div>`;
+      }
+    });
+  }
+
+  return html;
 }
 
 function mostraReport(assessment) {
@@ -1542,8 +1642,8 @@ function mostraReport(assessment) {
   document.getElementById('r-iam').textContent = `Livello: ${(r.iam || '').toUpperCase()}\n\n${r.iam_desc || ''}`;
 
   // Sezioni formattate — html strutturato
-  document.getElementById('r-piano').innerHTML = formatTesto(r.piano_allenamento);
-  document.getElementById('r-dieta').innerHTML = formatTesto(r.piano_dieta);
+  document.getElementById('r-piano').innerHTML = formatPiano(r.piano_allenamento);
+  document.getElementById('r-dieta').innerHTML = formatDieta(r.piano_dieta, r.distribuzione_pasti);
   document.getElementById('r-proiezione').innerHTML = formatTesto(r.proiezione);
 
   // Link foto
