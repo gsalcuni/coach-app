@@ -1656,20 +1656,26 @@ function mostraReport(assessment) {
   document.getElementById('r-dieta').innerHTML = formatDieta(r.piano_dieta, r.distribuzione_pasti);
   document.getElementById('r-proiezione').innerHTML = formatTesto(r.proiezione);
 
-  // Link foto
-  let fotoHtml = '';
+  // Link foto — dopo il banner verde "Assessment Completato"
+  const fotoDiv = document.getElementById('foto-assessment-links');
+  if (fotoDiv) fotoDiv.remove();
   if (f.frontale || f.laterale || f.posteriore) {
-    fotoHtml = `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e0d9c8;">
+    const newFotoDiv = document.createElement('div');
+    newFotoDiv.id = 'foto-assessment-links';
+    newFotoDiv.style.cssText = 'margin-top:12px;padding:12px 16px;background:#f5f3ef;border-radius:8px;';
+    newFotoDiv.innerHTML = `
       <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8a7355;margin-bottom:8px;font-weight:600;">📸 Foto Assessment</div>
       <div style="display:flex;gap:8px;">
-        ${f.frontale ? `<a href="${f.frontale}" target="_blank" style="flex:1;text-align:center;padding:8px;background:#f5f3ef;border-radius:6px;font-size:11px;color:#1a2b3a;text-decoration:none;font-weight:600;">Frontale ↗</a>` : ''}
-        ${f.laterale ? `<a href="${f.laterale}" target="_blank" style="flex:1;text-align:center;padding:8px;background:#f5f3ef;border-radius:6px;font-size:11px;color:#1a2b3a;text-decoration:none;font-weight:600;">Laterale ↗</a>` : ''}
-        ${f.posteriore ? `<a href="${f.posteriore}" target="_blank" style="flex:1;text-align:center;padding:8px;background:#f5f3ef;border-radius:6px;font-size:11px;color:#1a2b3a;text-decoration:none;font-weight:600;">Posteriore ↗</a>` : ''}
-      </div>
-    </div>`;
+        ${f.frontale ? `<a href="${f.frontale}" target="_blank" style="flex:1;text-align:center;padding:8px;background:#fff;border-radius:6px;font-size:11px;color:#1a2b3a;text-decoration:none;font-weight:600;border:1px solid #e0d9c8;">Frontale ↗</a>` : ''}
+        ${f.laterale ? `<a href="${f.laterale}" target="_blank" style="flex:1;text-align:center;padding:8px;background:#fff;border-radius:6px;font-size:11px;color:#1a2b3a;text-decoration:none;font-weight:600;border:1px solid #e0d9c8;">Laterale ↗</a>` : ''}
+        ${f.posteriore ? `<a href="${f.posteriore}" target="_blank" style="flex:1;text-align:center;padding:8px;background:#fff;border-radius:6px;font-size:11px;color:#1a2b3a;text-decoration:none;font-weight:600;border:1px solid #e0d9c8;">Posteriore ↗</a>` : ''}
+      </div>`;
+    const banner = document.getElementById('profilo-report').querySelector('.profilo-stato');
+    if (banner && banner.nextSibling) banner.parentNode.insertBefore(newFotoDiv, banner.nextSibling);
   }
+
   // Popola tab Nutrizione con dati assessment
-  if (r.piano_dieta) popolaTabNutrizioneAssessment(r.piano_dieta, assessment.parametri);
+  if (assessment.parametri) popolaTabNutrizioneAssessment(r.piano_dieta, assessment.parametri);
 
   // Popola tab Allenamento con piano assessment
   if (r.piano_allenamento) popolaTabAllenamentoAssessment(r.piano_allenamento);
@@ -1897,7 +1903,7 @@ Scrivi un documento professionale con:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
+        max_tokens: 2000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
