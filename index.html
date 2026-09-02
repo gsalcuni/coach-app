@@ -1688,19 +1688,21 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
   if (!params) return;
 
   // Aggiorna i campi input con i parametri dell'assessment
-  const pesoInput = document.getElementById('peso');
-  const altezzaInput = document.getElementById('altezza');
-  const etaInput = document.getElementById('eta');
-  if (pesoInput) pesoInput.value = params.peso || 80;
-  if (altezzaInput) altezzaInput.value = params.altezza || 175;
-  if (etaInput) etaInput.value = params.eta || 40;
+  const pesoEl = document.getElementById('peso');
+  const altezzaEl = document.getElementById('altezza');
+  const etaEl = document.getElementById('eta');
+  if (pesoEl) pesoEl.value = params.peso || 80;
+  if (altezzaEl) altezzaEl.value = params.altezza || 175;
+  if (etaEl) etaEl.value = params.eta || 40;
 
-  // Aggiorna il testo intro del tab nutrizione
+  // Aggiorna il testo intro
   const intro = document.querySelector('#tab-nutrizione .intro');
-  if (intro) intro.textContent = `Piano nutrizionale personalizzato — ${params.obiettivo || 'ricomposizione'}. Dati da assessment del ${new Date().toLocaleDateString('it-IT')}.`;
+  if (intro) intro.textContent = `Piano nutrizionale — ${params.obiettivo || 'ricomposizione'}. Aggiornato dall'assessment AI.`;
 
-  // Forza ricalcolo macros
-  if (typeof renderNutrizione === 'function') renderNutrizione();
+  // Forza ricalcolo con setTimeout per assicurarsi che il DOM sia aggiornato
+  setTimeout(() => {
+    if (typeof renderNutrizione === 'function') renderNutrizione();
+  }, 100);
 }
 
 /* =========================================================
@@ -1854,47 +1856,21 @@ async function scaricaDoc(tipo) {
 
     if (tipo === 'assessment') {
       nomeFile = 'Assessment_Completo.txt';
-      prompt = `Sei un AI Personal Trainer. Genera un assessment corporeo completo e dettagliato per:
-Peso:${p.peso}kg, Altezza:${p.altezza}cm, Età:${p.eta} anni, Sesso:${p.sesso}
-Misure: Vita ${p.vita}cm, Fianchi ${p.fianchi}cm, Petto ${p.petto}cm, Coscia dx ${p.coscia_dx}cm
-Obiettivo:${p.obiettivo}, Livello:${p.livello}, Limitazioni:${p.limitazioni||'nessuna'}
-Somatotipo rilevato: ${r.somatotipo}
-Postura rilevata: ${r.postura}
-IAM: ${r.iam} — ${r.iam_desc}
-Proiezione: ${r.proiezione}
+      prompt = `Genera un assessment corporeo professionale. Dati: Peso ${p.peso}kg, Altezza ${p.altezza}cm, Età ${p.eta}a, Sesso ${p.sesso}. Misure: Vita ${p.vita}cm, Fianchi ${p.fianchi}cm, Petto ${p.petto}cm, Coscia dx ${p.coscia_dx}cm. Obiettivo: ${p.obiettivo}. Limitazioni: ${p.limitazioni||'nessuna'}. Somatotipo: ${r.somatotipo}. Postura: ${r.postura}. IAM: ${r.iam}.
 
-Scrivi un documento professionale completo con: classificazione somatotipica dettagliata con spiegazione, analisi posturale sui tre piani con implicazioni pratiche, analisi composizione corporea, indice di aderenza mentale con spiegazione dell'approccio, raccomandazioni prioritarie, proiezione 12 settimane con numeri concreti e metodologia. Usa sezioni con titoli chiari.`;
+Scrivi con sezioni: 1) SOMATOTIPO (classificazione Heath-Carter, implicazioni pratiche) 2) ANALISI POSTURALE (tre piani, pattern critici, raccomandazioni) 3) COMPOSIZIONE CORPOREA (BMI, rapporti proporzionali, obiettivi realistici) 4) INDICE ADERENZA MENTALE (livello e approccio consigliato) 5) RACCOMANDAZIONI PRIORITARIE (top 5 azioni concrete) 6) PROIEZIONE 12 SETTIMANE (numeri concreti su peso, misure, performance). Sii preciso e professionale.`;
+
     } else if (tipo === 'allenamento') {
       nomeFile = 'Piano_Allenamento.txt';
-      prompt = `Sei un AI Personal Trainer esperto. Genera una scheda di allenamento professionale e dettagliata per:
-Peso:${p.peso}kg, Altezza:${p.altezza}cm, Età:${p.eta} anni
-Obiettivo:${p.obiettivo}, Attrezzatura:${p.attrezzatura}, Livello:${p.livello}
-Limitazioni:${p.limitazioni||'nessuna'}, Somatotipo:${r.somatotipo}, IAM:${r.iam}
+      prompt = `Genera una scheda allenamento professionale. Dati: ${p.peso}kg, ${p.altezza}cm, ${p.eta}a. Obiettivo: ${p.obiettivo}. Attrezzatura: ${p.attrezzatura}. Livello: ${p.livello}. Limitazioni: ${p.limitazioni||'nessuna'}. Somatotipo: ${r.somatotipo}.
 
-Scrivi un documento professionale con:
-1. PRINCIPI METODOLOGICI: approccio, TUT, progressione doppia, RIR, deload ogni 6-8 settimane, periodizzazione 8 settimane
-2. PROTOCOLLO CORE (prima di ogni sessione): esercizi specifici con esecuzione dettagliata, serie e ripetizioni
-3. SESSIONE PUSH (Lunedì): ogni esercizio con esecuzione dettagliata, serie x rip, TUT, progressione
-4. SESSIONE PULL (Mercoledì): ogni esercizio con esecuzione dettagliata, serie x rip, TUT, progressione  
-5. SESSIONE TOTAL BODY (Venerdì): ogni esercizio con esecuzione dettagliata, serie x rip, TUT, progressione
-6. NOTE SPECIALI per limitazioni fisiche (L5-S1 e epicondilite se presenti)
-7. PROGRESSIONE 8 SETTIMANE con deload`;
+Scrivi con sezioni: 1) PRINCIPI (TUT, progressione doppia, RIR, deload ogni 6-8 settimane) 2) CORE PROTOCOL (4 esercizi con esecuzione e serie) 3) PUSH - Lunedì (5-6 esercizi con serie x rip e note tecniche) 4) PULL - Mercoledì (5-6 esercizi con serie x rip e note tecniche) 5) TOTAL BODY - Venerdì (5-6 esercizi con serie x rip e note tecniche) 6) NOTE SPECIALI per limitazioni. Includi adattamenti specifici per le limitazioni fisiche indicate.`;
+
     } else if (tipo === 'nutrizione') {
       nomeFile = 'Piano_Nutrizionale.txt';
-      prompt = `Sei un nutrizionista esperto. Genera un piano nutrizionale professionale e dettagliato per:
-Peso:${p.peso}kg, Altezza:${p.altezza}cm, Età:${p.eta} anni, Sesso:${p.sesso}
-Obiettivo:${p.obiettivo}, Somatotipo:${r.somatotipo}, IAM:${r.iam}
-Preferenze alimentari:${p.preferenze_alimentari||'nessuna'}
-Limitazioni:${p.limitazioni||'nessuna'}
+      prompt = `Genera un piano nutrizionale professionale. Dati: ${p.peso}kg, ${p.altezza}cm, ${p.eta}a, sesso ${p.sesso}. Obiettivo: ${p.obiettivo}. Somatotipo: ${r.somatotipo}. Preferenze: ${p.preferenze_alimentari||'nessuna'}.
 
-Scrivi un documento professionale con:
-1. CALCOLO TDEE: formula Mifflin-St Jeor con tutti i passaggi, TDEE giorno allenamento e riposo
-2. MACRONUTRIENTI: proteine, carboidrati, grassi con spiegazione del perché per questo somatotipo
-3. DISTRIBUZIONE PASTI — GIORNO ALLENAMENTO: colazione, metà mattina, pranzo, metà pomeriggio, cena con kcal e macros per pasto e esempi di alimenti
-4. DISTRIBUZIONE PASTI — GIORNO RIPOSO: stessa struttura con valori ridotti
-5. TIMING DEI NUTRIENTI: quando mangiare cosa rispetto all'allenamento
-6. SUPPLEMENTAZIONE CONSIGLIATA
-7. NOTE PRATICHE per le preferenze alimentari indicate`;
+Scrivi con sezioni: 1) CALCOLO TDEE (formula Mifflin-St Jeor, TDEE allenamento e riposo) 2) MACRONUTRIENTI (proteine/carbo/grassi con spiegazione per questo somatotipo) 3) GIORNO ALLENAMENTO - distribuzione pasti (Colazione, Metà mattina, Pranzo, Metà pomeriggio, Cena con kcal e macros per pasto e esempi alimenti) 4) GIORNO RIPOSO - distribuzione pasti (stessa struttura con valori ridotti) 5) TIMING NUTRIENTI (quando mangiare cosa rispetto all'allenamento) 6) NOTE PRATICHE. Calcola valori numerici precisi.`;
     }
 
     // Chiamata Claude per documento dettagliato
