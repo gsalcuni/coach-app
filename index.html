@@ -1687,22 +1687,107 @@ function mostraReport(assessment) {
 function popolaTabNutrizioneAssessment(dietaTesto, params) {
   if (!params) return;
 
-  // Aggiorna i campi input con i parametri dell'assessment
+  const peso = params.peso || 80;
+  const altezza = params.altezza || 175;
+  const eta = params.eta || 40;
+
+  // Aggiorna i campi input E dispatcha evento per triggerare renderNutrizione
   const pesoEl = document.getElementById('peso');
   const altezzaEl = document.getElementById('altezza');
   const etaEl = document.getElementById('eta');
-  if (pesoEl) pesoEl.value = params.peso || 80;
-  if (altezzaEl) altezzaEl.value = params.altezza || 175;
-  if (etaEl) etaEl.value = params.eta || 40;
+  if (pesoEl) { pesoEl.value = peso; pesoEl.dispatchEvent(new Event('input')); }
+  if (altezzaEl) { altezzaEl.value = altezza; altezzaEl.dispatchEvent(new Event('input')); }
+  if (etaEl) { etaEl.value = eta; etaEl.dispatchEvent(new Event('input')); }
 
-  // Aggiorna il testo intro
+  // Aggiorna testo intro
   const intro = document.querySelector('#tab-nutrizione .intro');
   if (intro) intro.textContent = `Piano nutrizionale — ${params.obiettivo || 'ricomposizione'}. Aggiornato dall'assessment AI.`;
 
-  // Forza ricalcolo con setTimeout per assicurarsi che il DOM sia aggiornato
-  setTimeout(() => {
-    if (typeof renderNutrizione === 'function') renderNutrizione();
-  }, 100);
+  // Calcola valori
+  const bmr = 10 * peso + 6.25 * altezza - 5 * eta + 5;
+  const tdeeAll = Math.round(bmr * 1.55) + 100;
+  const tdeeRip = Math.round(bmr * 1.2) - 100;
+  const prot = Math.round(peso * 2.0);
+  const grassiAll = Math.round(peso * 0.8);
+  const grassiRip = Math.round(peso * 0.9);
+  const carbsAll = Math.round((tdeeAll - prot*4 - grassiAll*9) / 4);
+  const carbsRip = Math.round((tdeeRip - prot*4 - grassiRip*9) / 4);
+
+  // Distribuzione pasti con percentuali differenziate
+  const pastiDef = [
+    { nome: '☀️ Colazione',      pctAll: 0.22, pctRip: 0.22, pPctAll: 0.22, pPctRip: 0.22, cPctAll: 0.28, cPctRip: 0.18, gPct: 0.20 },
+    { nome: '🍎 Metà Mattina',   pctAll: 0.10, pctRip: 0.08, pPctAll: 0.12, pPctRip: 0.10, cPctAll: 0.10, cPctRip: 0.06, gPct: 0.10 },
+    { nome: '🍽 Pranzo',         pctAll: 0.30, pctRip: 0.32, pPctAll: 0.30, pPctRip: 0.30, cPctAll: 0.32, cPctRip: 0.30, gPct: 0.28 },
+    { nome: '🥤 Metà Pomeriggio',pctAll: 0.10, pctRip: 0.08, pPctAll: 0.12, pPctRip: 0.10, cPctAll: 0.10, cPctRip: 0.06, gPct: 0.10 },
+    { nome: '🌙 Cena',           pctAll: 0.28, pctRip: 0.30, pPctAll: 0.24, pPctRip: 0.28, cPctAll: 0.20, cPctRip: 0.40, gPct: 0.32 },
+  ];
+
+  // Rimuovi eventuale precedente
+  const esistente = document.getElementById('distribuzione-pasti-nutrizione');
+  if (esistente) esistente.remove();
+
+  const div = document.createElement('div');
+  div.id = 'distribuzione-pasti-nutrizione';
+  div.style.cssText = 'margin-top:16px;';
+
+  div.innerHTML = `
+    <div class="card">
+      <div class="card-label" style="margin-bottom:10px;">📊 Piano Nutrizionale — Doppia Colonna</div>
+
+      <!-- Tabella macros -->
+      <div style="font-size:10px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Target Giornaliero</div>
+      <div style="border:1px solid #e0d9c8;border-radius:6px;overflow:hidden;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:#1a2b3a;padding:7px 10px;">
+          <div style="font-size:10px;font-weight:700;color:#f4f1ea;text-transform:uppercase;letter-spacing:0.06em;"></div>
+          <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">🏋 Allen.</div>
+          <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">😴 Riposo</div>
+        </div>
+        ${[
+          ['🔥 Kcal', tdeeAll+'', tdeeRip+''],
+          ['🥩 Proteine', prot+'g', prot+'g'],
+          ['🌾 Carboidrati', carbsAll+'g', carbsRip+'g'],
+          ['🥑 Grassi', grassiAll+'g', grassiRip+'g'],
+        ].map((r,i) => `
+          <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:${i%2===0?'#fafaf7':'#fff'};border-top:1px solid #f0ede6;">
+            <div style="padding:7px 10px;font-size:12px;color:#5a5248;">${r[0]}</div>
+            <div style="padding:7px 10px;font-size:12px;font-weight:700;color:#1a2b3a;text-align:center;">${r[1]}</div>
+            <div style="padding:7px 10px;font-size:12px;font-weight:700;color:#2d5a3d;text-align:center;">${r[2]}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Distribuzione pasti -->
+      <div style="font-size:10px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Distribuzione Pasti</div>
+      <div style="border:1px solid #e0d9c8;border-radius:6px;overflow:hidden;">
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:#1a2b3a;padding:7px 10px;">
+          <div style="font-size:10px;font-weight:700;color:#f4f1ea;text-transform:uppercase;letter-spacing:0.06em;">Pasto</div>
+          <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">🏋 Allen.</div>
+          <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">😴 Riposo</div>
+        </div>
+        ${pastiDef.map((p, i) => {
+          const kcalA = Math.round(tdeeAll * p.pctAll);
+          const kcalR = Math.round(tdeeRip * p.pctRip);
+          const pA = Math.round(prot * p.pPctAll);
+          const pR = Math.round(prot * p.pPctRip);
+          const cA = Math.round(carbsAll * p.cPctAll);
+          const cR = Math.round(carbsRip * p.cPctRip);
+          const gA = Math.round(grassiAll * p.gPct);
+          const gR = Math.round(grassiRip * p.gPct);
+          return `<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:${i%2===0?'#fafaf7':'#fff'};border-top:1px solid #f0ede6;">
+            <div style="padding:7px 10px;font-size:12px;color:#5a5248;">${p.nome}</div>
+            <div style="padding:7px 10px;font-size:11px;color:#1a2b3a;text-align:center;"><b>${kcalA}kcal</b><br><span style="color:#666;">P${pA} C${cA} G${gA}</span></div>
+            <div style="padding:7px 10px;font-size:11px;color:#2d5a3d;text-align:center;"><b>${kcalR}kcal</b><br><span style="color:#666;">P${pR} C${cR} G${gR}</span></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // Inserisci nel tab nutrizione
+  const footnoteEl = document.querySelector('#tab-nutrizione .footnote');
+  if (footnoteEl) footnoteEl.after(div);
+  else document.getElementById('tab-nutrizione').appendChild(div);
+
+  // Forza ricalcolo barra macros
+  setTimeout(() => { if (typeof renderNutrizione === 'function') renderNutrizione(); }, 150);
 }
 
 /* =========================================================
