@@ -1577,61 +1577,42 @@ function formatPiano(testo) {
   return html || formatTesto(testo);
 }
 
-function formatDieta(dieta, pasti) {
-  if (!dieta && !pasti) return '';
-  let html = '';
+function formatDieta(dieta, pasti, params) {
+  // Usa parametri reali per calcolare valori coerenti con il tab Nutrizione
+  const peso = (params && params.peso) || 80;
+  const altezza = (params && params.altezza) || 175;
+  const eta = (params && params.eta) || 40;
+  const bmr = 10 * peso + 6.25 * altezza - 5 * eta + 5;
+  const tdeeBase = Math.round(bmr * 1.55);
+  const tdeeAll = tdeeBase + 100;
+  const tdeeRip = tdeeBase - 250;
+  const prot = Math.round(peso * 2.0);
+  const grassiAll = Math.round(peso * 0.8);
+  const grassiRip = Math.round(peso * 0.9);
+  const carbsAll = Math.round(Math.max(tdeeAll - prot*4 - grassiAll*9, 0) / 4);
+  const carbsRip = Math.round(Math.max(tdeeRip - prot*4 - grassiRip*9, 0) / 4);
 
-  // TDEE e macros
-  if (dieta) {
-    const lines = dieta.split('\n').filter(l => l.trim());
-    const labels = {
-      'TDEE_ALLENAMENTO': '🏋 Giorno Allenamento',
-      'TDEE_RIPOSO': '😴 Giorno Riposo',
-      'PROTEINE': '🥩 Proteine',
-      'CARBO_ALLENAMENTO': '🌾 Carbo Allenamento',
-      'CARBO_RIPOSO': '🌾 Carbo Riposo',
-      'GRASSI': '🥑 Grassi'
-    };
-    html += `<div style="font-size:11px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Target Giornaliero</div>`;
-    lines.forEach(line => {
-      const colonIdx = line.indexOf(':');
-      if (colonIdx < 0) return;
-      const key = line.slice(0, colonIdx).trim().toUpperCase();
-      const val = line.slice(colonIdx + 1).trim();
-      const label = labels[key];
-      if (label) {
-        html += `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0ede6;font-size:13px;"><span style="color:#5a5248;">${label}</span><span style="font-weight:700;color:#1a2b3a;">${val}</span></div>`;
-      }
-    });
-  }
-
-  // Distribuzione pasti
-  if (pasti) {
-    const lines = pasti.split('\n').filter(l => l.trim());
-    const pastiLabels = {
-      'COLAZIONE': '☀️ Colazione',
-      'META_MATTINA': '🍎 Metà Mattina',
-      'PRANZO': '🍽 Pranzo',
-      'META_POMERIGGIO': '🥤 Metà Pomeriggio',
-      'CENA': '🌙 Cena'
-    };
-    html += `<div style="font-size:11px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin:16px 0 8px;">Distribuzione Pasti</div>`;
-    lines.forEach(line => {
-      const colonIdx = line.indexOf(':');
-      if (colonIdx < 0) return;
-      const key = line.slice(0, colonIdx).trim().toUpperCase();
-      const val = line.slice(colonIdx + 1).trim();
-      const label = pastiLabels[key];
-      if (label) {
-        html += `<div style="padding:6px 0;border-bottom:1px solid #f0ede6;">
-          <div style="font-size:12px;font-weight:700;color:#1a2b3a;margin-bottom:2px;">${label}</div>
-          <div style="font-size:12px;color:#5a5248;">${val}</div>
-        </div>`;
-      }
-    });
-  }
-
-  return html;
+  return `
+    <div style="font-size:11px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Target Giornaliero</div>
+    <div style="border:1px solid #e0d9c8;border-radius:6px;overflow:hidden;">
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;background:#1a2b3a;padding:7px 10px;">
+        <div style="font-size:10px;font-weight:700;color:#f4f1ea;text-transform:uppercase;"></div>
+        <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;">🏋 Allenamento</div>
+        <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;">😴 Riposo</div>
+      </div>
+      ${[
+        ['🔥 Kcal totali', tdeeAll+'kcal', tdeeRip+'kcal'],
+        ['🥩 Proteine', prot+'g', prot+'g'],
+        ['🌾 Carboidrati', carbsAll+'g', carbsRip+'g'],
+        ['🥑 Grassi', grassiAll+'g', grassiRip+'g'],
+      ].map((r,i) => `
+        <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;background:${i%2===0?'#fafaf7':'#fff'};border-top:1px solid #f0ede6;">
+          <div style="padding:7px 10px;font-size:12px;color:#5a5248;">${r[0]}</div>
+          <div style="padding:7px 10px;font-size:12px;font-weight:700;color:#1a2b3a;text-align:center;">${r[1]}</div>
+          <div style="padding:7px 10px;font-size:12px;font-weight:700;color:#2d5a3d;text-align:center;">${r[2]}</div>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:11px;color:#8a7355;margin-top:8px;font-style:italic;">Per la distribuzione pasti dettagliata vai al tab Nutrizione →</div>`;
 }
 
 function mostraReport(assessment) {
@@ -1653,7 +1634,7 @@ function mostraReport(assessment) {
 
   // Sezioni formattate — html strutturato
   document.getElementById('r-piano').innerHTML = formatPiano(r.piano_allenamento);
-  document.getElementById('r-dieta').innerHTML = formatDieta(r.piano_dieta, r.distribuzione_pasti);
+  document.getElementById('r-dieta').innerHTML = formatDieta(r.piano_dieta, r.distribuzione_pasti, assessment.parametri);
   document.getElementById('r-proiezione').innerHTML = formatTesto(r.proiezione);
 
   // Link foto — dopo il banner verde "Assessment Completato"
@@ -1703,15 +1684,16 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
   const intro = document.querySelector('#tab-nutrizione .intro');
   if (intro) intro.textContent = `Piano nutrizionale — ${params.obiettivo || 'ricomposizione'}. Aggiornato dall'assessment AI.`;
 
-  // Calcola valori
+  // Calcola valori con STESSA formula dell'app
   const bmr = 10 * peso + 6.25 * altezza - 5 * eta + 5;
-  const tdeeAll = Math.round(bmr * 1.55) + 100;
-  const tdeeRip = Math.round(bmr * 1.2) - 100;
+  const tdeeBase = Math.round(bmr * 1.55);
+  const tdeeAll = tdeeBase + 100;
+  const tdeeRip = tdeeBase - 250;
   const prot = Math.round(peso * 2.0);
   const grassiAll = Math.round(peso * 0.8);
   const grassiRip = Math.round(peso * 0.9);
-  const carbsAll = Math.round((tdeeAll - prot*4 - grassiAll*9) / 4);
-  const carbsRip = Math.round((tdeeRip - prot*4 - grassiRip*9) / 4);
+  const carbsAll = Math.round(Math.max(tdeeAll - prot*4 - grassiAll*9, 0) / 4);
+  const carbsRip = Math.round(Math.max(tdeeRip - prot*4 - grassiRip*9, 0) / 4);
 
   // Distribuzione pasti con percentuali differenziate
   const pastiDef = [
@@ -1941,21 +1923,21 @@ async function scaricaDoc(tipo) {
 
     if (tipo === 'assessment') {
       nomeFile = 'Assessment_Completo.txt';
-      prompt = `Genera un assessment corporeo professionale. Dati: Peso ${p.peso}kg, Altezza ${p.altezza}cm, Età ${p.eta}a, Sesso ${p.sesso}. Misure: Vita ${p.vita}cm, Fianchi ${p.fianchi}cm, Petto ${p.petto}cm, Coscia dx ${p.coscia_dx}cm. Obiettivo: ${p.obiettivo}. Limitazioni: ${p.limitazioni||'nessuna'}. Somatotipo: ${r.somatotipo}. Postura: ${r.postura}. IAM: ${r.iam}.
-
-Scrivi con sezioni: 1) SOMATOTIPO (classificazione Heath-Carter, implicazioni pratiche) 2) ANALISI POSTURALE (tre piani, pattern critici, raccomandazioni) 3) COMPOSIZIONE CORPOREA (BMI, rapporti proporzionali, obiettivi realistici) 4) INDICE ADERENZA MENTALE (livello e approccio consigliato) 5) RACCOMANDAZIONI PRIORITARIE (top 5 azioni concrete) 6) PROIEZIONE 12 SETTIMANE (numeri concreti su peso, misure, performance). Sii preciso e professionale.`;
+      prompt = `Assessment corporeo professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Vita:${p.vita} Fianchi:${p.fianchi} Petto:${p.petto} CosciaDx:${p.coscia_dx}. Obiettivo:${p.obiettivo}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}. Postura:${r.postura}. IAM:${r.iam}.
+Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath-Carter e implicazioni 2)POSTURA: analisi tre piani e raccomandazioni 3)COMPOSIZIONE CORPOREA: BMI e obiettivi realistici 4)IAM: livello e approccio 5)PRIORITA: top 5 azioni concrete 6)PROIEZIONE: 12 settimane con numeri. Max 600 parole totali.`;
 
     } else if (tipo === 'allenamento') {
       nomeFile = 'Piano_Allenamento.txt';
-      prompt = `Genera una scheda allenamento professionale. Dati: ${p.peso}kg, ${p.altezza}cm, ${p.eta}a. Obiettivo: ${p.obiettivo}. Attrezzatura: ${p.attrezzatura}. Livello: ${p.livello}. Limitazioni: ${p.limitazioni||'nessuna'}. Somatotipo: ${r.somatotipo}.
-
-Scrivi con sezioni: 1) PRINCIPI (TUT, progressione doppia, RIR, deload ogni 6-8 settimane) 2) CORE PROTOCOL (4 esercizi con esecuzione e serie) 3) PUSH - Lunedì (5-6 esercizi con serie x rip e note tecniche) 4) PULL - Mercoledì (5-6 esercizi con serie x rip e note tecniche) 5) TOTAL BODY - Venerdì (5-6 esercizi con serie x rip e note tecniche) 6) NOTE SPECIALI per limitazioni. Includi adattamenti specifici per le limitazioni fisiche indicate.`;
+      prompt = `Scheda allenamento professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a. Obiettivo:${p.obiettivo}. Attrezzatura:${p.attrezzatura}. Livello:${p.livello}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}.
+Scrivi: 1)PRINCIPI: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE(ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH-Lunedì: 5 esercizi con serie x rip e note tecniche 4)PULL-Mercoledì: 5 esercizi con serie x rip e note tecniche 5)TOTAL BODY-Venerdì: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. Max 600 parole.`;
 
     } else if (tipo === 'nutrizione') {
       nomeFile = 'Piano_Nutrizionale.txt';
-      prompt = `Genera un piano nutrizionale professionale. Dati: ${p.peso}kg, ${p.altezza}cm, ${p.eta}a, sesso ${p.sesso}. Obiettivo: ${p.obiettivo}. Somatotipo: ${r.somatotipo}. Preferenze: ${p.preferenze_alimentari||'nessuna'}.
-
-Scrivi con sezioni: 1) CALCOLO TDEE (formula Mifflin-St Jeor, TDEE allenamento e riposo) 2) MACRONUTRIENTI (proteine/carbo/grassi con spiegazione per questo somatotipo) 3) GIORNO ALLENAMENTO - distribuzione pasti (Colazione, Metà mattina, Pranzo, Metà pomeriggio, Cena con kcal e macros per pasto e esempi alimenti) 4) GIORNO RIPOSO - distribuzione pasti (stessa struttura con valori ridotti) 5) TIMING NUTRIENTI (quando mangiare cosa rispetto all'allenamento) 6) NOTE PRATICHE. Calcola valori numerici precisi.`;
+      const bmr = 10*(p.peso||80) + 6.25*(p.altezza||175) - 5*(p.eta||40) + 5;
+      const tdeeAll = Math.round(bmr*1.55)+100;
+      const tdeeRip = Math.round(bmr*1.55)-250;
+      prompt = `Piano nutrizionale professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Obiettivo:${p.obiettivo}. Somatotipo:${r.somatotipo}. Preferenze:${p.preferenze_alimentari||'nessuna'}. TDEE allenamento:${tdeeAll}kcal, riposo:${tdeeRip}kcal.
+Scrivi: 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa struttura con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE per preferenze indicate. Max 600 parole.`;
     }
 
     // Chiamata Claude per documento dettagliato
