@@ -94,7 +94,7 @@ async function cercaTavily(domanda) {
 }
 
 // Costruisce il contesto dalla knowledge base con diversità forzata
-function costruisciContesto(matches, sogliaMinima = 0.5) {
+function costruisciContesto(matches, sogliaMinima = 0.4) {
   const rilevanti = matches.filter(m => m.score >= sogliaMinima);
   if (rilevanti.length === 0) return null;
 
@@ -163,7 +163,7 @@ exports.handler = async (event) => {
 
           // Cerca in Pinecone con topK alto per poi filtrare per diversità
           const matches = await cercaPinecone(embedding, 10);
-          const contesto = costruisciContesto(matches, 0.5);
+          const contesto = costruisciContesto(matches, 0.4);
 
           if (contesto) {
             // Knowledge base trovata — usa come contesto
