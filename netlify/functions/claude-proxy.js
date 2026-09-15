@@ -1,5 +1,6 @@
 const https = require('https');
 
+// Funzione per fare fetch HTTPS senza dipendenze esterne
 function httpsPost(url, data, headers) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
@@ -50,6 +51,7 @@ function httpsGet(url, headers) {
   });
 }
 
+// Crea embedding con OpenAI
 async function creaEmbedding(testo) {
   const res = await httpsPost(
     'https://api.openai.com/v1/embeddings',
@@ -62,8 +64,9 @@ async function creaEmbedding(testo) {
   throw new Error('Embedding fallito: ' + JSON.stringify(res.body));
 }
 
+// Cerca in Pinecone
 async function cercaPinecone(embedding, topK = 5) {
-  const indexHost = process.env.PINECONE_INDEX_HOST;
+  const indexHost = process.env.PINECONE_INDEX_HOST; // es. https://coach-app-knowledge-xxxx.svc.xxx.pinecone.io
   const res = await httpsPost(
     `${indexHost}/query`,
     { vector: embedding, topK, includeMetadata: true },
@@ -72,6 +75,7 @@ async function cercaPinecone(embedding, topK = 5) {
   return res.body.matches || [];
 }
 
+// Cerca su Tavily (fallback web)
 async function cercaTavily(domanda) {
   const res = await httpsPost(
     'https://api.tavily.com/search',
@@ -89,10 +93,25 @@ async function cercaTavily(domanda) {
   return '';
 }
 
+// Costruisce il contesto dalla knowledge base con diversità forzata
 function costruisciContesto(matches, sogliaMinima = 0.5) {
   const rilevanti = matches.filter(m => m.score >= sogliaMinima);
   if (rilevanti.length === 0) return null;
-  return rilevanti.map(m => {
+
+  // Diversità: max 2 chunk per fonte
+  const perFonte = {};
+  const diversi = [];
+  for (const m of rilevanti) {
+    const fonte = m.metadata?.fonte || 'unknown';
+    if (!perFonte[fonte]) perFonte[fonte] = 0;
+    if (perFonte[fonte] < 2) {
+      diversi.push(m);
+      perFonte[fonte]++;
+    }
+    if (diversi.length >= 5) break; // max 5 chunk totali
+  }
+
+  return diversi.map(m => {
     const fonte = m.metadata?.fonte || 'knowledge base';
     const testo = m.metadata?.testo || '';
     return `[Fonte: ${fonte}]\n${testo}`;
@@ -100,6 +119,7 @@ function costruisciContesto(matches, sogliaMinima = 0.5) {
 }
 
 exports.handler = async (event) => {
+  // Gestione CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -124,25 +144,32 @@ exports.handler = async (event) => {
   try {
     const body = JSON.parse(event.body);
     const messages = body.messages || [];
-    const useRAG = body.useRAG !== false;
+    const useRAG = body.useRAG !== false; // default true
 
     let contextoPrepend = '';
 
+    // RAG — solo se richiesto e se Pinecone è configurato
     if (useRAG && process.env.PINECONE_API_KEY && process.env.PINECONE_INDEX_HOST && process.env.OPENAI_API_KEY) {
       try {
+        // Estrai l'ultima domanda dell'utente
         const ultimoMessaggio = messages.filter(m => m.role === 'user').pop();
         const domanda = typeof ultimoMessaggio?.content === 'string'
           ? ultimoMessaggio.content
           : ultimoMessaggio?.content?.find(c => c.type === 'text')?.text || '';
 
         if (domanda && domanda.length > 10) {
+          // Crea embedding della domanda
           const embedding = await creaEmbedding(domanda);
-          const matches = await cercaPinecone(embedding, 5);
+
+          // Cerca in Pinecone con topK alto per poi filtrare per diversità
+          const matches = await cercaPinecone(embedding, 10);
           const contesto = costruisciContesto(matches, 0.5);
 
           if (contesto) {
+            // Knowledge base trovata — usa come contesto
             contextoPrepend = `KNOWLEDGE BASE RILEVANTE:\n${contesto}\n\nUSA queste informazioni per rispondere in modo preciso e scientifico.\n\n`;
           } else if (process.env.TAVILY_API_KEY) {
+            // Fallback web search
             const webRisultati = await cercaTavily(domanda);
             if (webRisultati) {
               contextoPrepend = `RISULTATI WEB:\n${webRisultati}\n\nUSA queste informazioni come riferimento aggiuntivo.\n\n`;
@@ -150,13 +177,16 @@ exports.handler = async (event) => {
           }
         }
       } catch(ragErr) {
+        // RAG fallito silenziosamente — continua senza contesto
         console.error('RAG error:', ragErr.message);
       }
     }
 
+    // Prepara messaggi per Claude — inietta contesto se disponibile
     let finalMessages = messages;
     if (contextoPrepend) {
       finalMessages = messages.map((m, i) => {
+        // Inietta il contesto nell'ultimo messaggio utente
         if (i === messages.length - 1 && m.role === 'user') {
           const contenuto = typeof m.content === 'string'
             ? contextoPrepend + m.content
@@ -167,6 +197,7 @@ exports.handler = async (event) => {
       });
     }
 
+    // Chiamata a Claude API
     const claudeRes = await httpsPost(
       'https://api.anthropic.com/v1/messages',
       {
