@@ -2045,11 +2045,25 @@ async function caricaContextoAssessment() {
   }
 }
 
+function renderMarkdown(testo) {
+  return testo
+    .replace(/^## (.+)$/gm, '<div style="font-size:13px;font-weight:700;color:#1a2b3a;margin:10px 0 4px;">$1</div>')
+    .replace(/^### (.+)$/gm, '<div style="font-size:12px;font-weight:700;color:#5a5248;margin:8px 0 3px;">$1</div>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #e0d9c8;margin:8px 0;">')
+    .replace(/^- (.+)$/gm, '<div style="padding:2px 0 2px 12px;border-left:2px solid #d8cfba;margin:2px 0;font-size:12px;">$1</div>')
+    .replace(/\n/g, '<br>');
+}
+
 function aggiungiMessaggio(ruolo, testo) {
   const msgs = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = `chat-msg ${ruolo}`;
-  div.textContent = testo;
+  if (ruolo === 'assistant') {
+    div.innerHTML = renderMarkdown(testo);
+  } else {
+    div.textContent = testo;
+  }
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
   return div;
@@ -2070,8 +2084,16 @@ async function inviaMessaggioChat() {
   const thinking = aggiungiMessaggio('thinking', 'Il coach sta scrivendo...');
 
   try {
+    const systemPrompt = `Sei un AI Personal Trainer e Coach integrale. Il tuo stile è diretto, assertivo, energico — ispirato a Napoleon Hill, Tim Grover, Louise Hay. Mai conciliante, mai circolare, mai morbido. Sfida prima di confortare. Una domanda scomoda vale più di dieci risposte confortanti. Accountability senza cedimenti.
+
+Lavori sempre su tre dimensioni: coaching mentale (priorità assoluta), allenamento fisico e nutrizione. Prima di rispondere chiediti: il problema è tattico o identitario? Il coaching vero si fa sempre sul livello identitario.
+
+${chatAssessmentContext}
+
+Rispondi in italiano. Risposte concise e dirette. Usa markdown quando utile (## per titoli, **grassetto**, - per liste).`;
+
     const messages = chatAssessmentContext
-      ? [{ role: 'user', content: chatAssessmentContext }, { role: 'assistant', content: 'Capito. Sono il tuo coach. Come posso aiutarti?' }, ...chatHistory]
+      ? [{ role: 'user', content: systemPrompt }, { role: 'assistant', content: 'Sono il tuo Coach. Cosa vuoi affrontare oggi?' }, ...chatHistory]
       : chatHistory;
 
     const res = await fetch('/.netlify/functions/claude-proxy', {
@@ -2079,7 +2101,7 @@ async function inviaMessaggioChat() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 500,
+        max_tokens: 800,
         messages: messages
       })
     });
