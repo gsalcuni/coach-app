@@ -1814,42 +1814,78 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
 function popolaTabAllenamentoAssessment(pianoTesto) {
   if (!pianoTesto) return;
 
-  // Estrai esercizi per sessione dal testo strutturato
-  const sessioni = {};
+  // Rimuovi eventuale contenuto precedente
+  const esistente = document.getElementById('assessment-piano-allenamento');
+  if (esistente) esistente.remove();
+
+  // Aggiorna testo intro
+  const intro = document.querySelector('#tab-allenamento .intro');
+  if (intro) intro.textContent = 'Piano generato dall\'assessment AI. Registra i tuoi carichi nel log qui sotto.';
+
+  // Costruisci HTML dal testo strutturato
+  const sessioni = { 'CORE': '🧘 Core — Pre-workout (ogni sessione)', 'PUSH': '💪 Push — Lunedì', 'PULL': '🔄 Pull — Mercoledì', 'TOTAL_BODY': '⚡ Total Body — Venerdì', 'NOTE': '📝 Note' };
+  let html = '';
   const lines = pianoTesto.split('\n').filter(l => l.trim());
+  const sessioniData = {};
 
   lines.forEach(line => {
     const colonIdx = line.indexOf(':');
     if (colonIdx < 0) return;
     const key = line.slice(0, colonIdx).trim().toUpperCase();
     const val = line.slice(colonIdx + 1).trim();
-    if (['CORE', 'PUSH', 'PULL', 'TOTAL_BODY'].includes(key)) {
-      sessioni[key] = val.split(';').map(s => {
-        // Estrai solo il nome dell'esercizio (prima dei numeri)
-        return s.trim().replace(/\d+x\d+.*$/,'').replace(/@.*$/,'').trim();
-      }).filter(Boolean);
+    const label = sessioni[key];
+    if (!label) return;
+
+    sessioniData[key] = val;
+
+    html += `<div style="margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #1a2b3a;">${label}</div>`;
+
+    if (key === 'NOTE') {
+      val.split(';').map(s => s.trim()).filter(Boolean).forEach(nota => {
+        html += `<div style="font-size:12px;color:#5a5248;padding:4px 0;border-bottom:1px solid #f0ede6;">• ${nota}</div>`;
+      });
+    } else {
+      html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#f5f3ef;">
+          <th style="padding:6px 8px;text-align:left;color:#8a7355;font-weight:600;">Esercizio</th>
+          <th style="padding:6px 8px;text-align:center;color:#8a7355;font-weight:600;white-space:nowrap;">Serie×Rip</th>
+        </tr></thead><tbody>`;
+
+      val.split(';').map(s => s.trim()).filter(Boolean).forEach((esercizio, i) => {
+        const match = esercizio.match(/^(.+?)\s+(\d+x[\d"]+\w*)\s*(.*)$/);
+        const nome = match ? match[1] : esercizio;
+        const serie = match ? match[2] : '';
+        const nota = match ? match[3] : '';
+        html += `<tr style="background:${i%2===0?'#fff':'#fafaf7'};border-bottom:1px solid #f0ede6;">
+          <td style="padding:6px 8px;color:#1a2b3a;">${nome}${nota ? `<br><span style="font-size:10px;color:#8a7355;">${nota}</span>` : ''}</td>
+          <td style="padding:6px 8px;text-align:center;font-weight:700;color:#1a2b3a;">${serie}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
     }
+    html += `</div>`;
   });
 
-  // Aggiorna SCHEDA con gli esercizi dall'assessment
-  if (sessioni.PUSH && sessioni.PUSH.length > 0) {
-    const coreEsercizi = sessioni.CORE || ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
-    SCHEDA.lunedi.esercizi = [...coreEsercizi, ...sessioni.PUSH];
-  }
-  if (sessioni.PULL && sessioni.PULL.length > 0) {
-    const coreEsercizi = sessioni.CORE || ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
-    SCHEDA.mercoledi.esercizi = [...coreEsercizi, ...sessioni.PULL];
-  }
-  if (sessioni.TOTAL_BODY && sessioni.TOTAL_BODY.length > 0) {
-    const coreEsercizi = sessioni.CORE || ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
-    SCHEDA.venerdi.esercizi = [...coreEsercizi, ...sessioni.TOTAL_BODY];
+  if (html) {
+    const div = document.createElement('div');
+    div.id = 'assessment-piano-allenamento';
+    div.className = 'card';
+    div.style.cssText = 'margin-bottom:12px;';
+    div.innerHTML = `<div class="card-label" style="margin-bottom:12px;">📋 Piano da Assessment AI</div>${html}`;
+    const giorni = document.getElementById('giorni-row');
+    if (giorni) giorni.parentNode.insertBefore(div, giorni);
+    else document.getElementById('tab-allenamento').prepend(div);
   }
 
-  // Aggiorna il testo intro del tab allenamento
-  const intro = document.querySelector('#tab-allenamento .intro');
-  if (intro) intro.textContent = 'Piano aggiornato dall\'assessment AI. Il core precede ogni sessione. Registra i tuoi carichi qui sotto.';
+  // Aggiorna SCHEDA per il log carichi
+  const core = sessioniData.CORE ? sessioniData.CORE.split(';').map(s => s.trim().replace(/\d+x.*/,'').trim()).filter(Boolean) : ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
+  const parseEs = val => val ? val.split(';').map(s => s.trim().replace(/\d+x.*/,'').trim()).filter(Boolean) : [];
 
-  // Rirendizza
+  if (sessioniData.PUSH) SCHEDA.lunedi.esercizi = [...core, ...parseEs(sessioniData.PUSH)];
+  if (sessioniData.PULL) SCHEDA.mercoledi.esercizi = [...core, ...parseEs(sessioniData.PULL)];
+  if (sessioniData.TOTAL_BODY) SCHEDA.venerdi.esercizi = [...core, ...parseEs(sessioniData.TOTAL_BODY)];
+
   if (typeof renderGiorni === 'function') renderGiorni();
   if (typeof renderEsercizi === 'function') renderEsercizi();
 }
@@ -2078,12 +2114,11 @@ async function inviaMessaggioChat() {
   input.value = '';
   sendBtn.disabled = true;
   aggiungiMessaggio('user', testo);
-
   chatHistory.push({ role: 'user', content: testo });
 
   const thinking = aggiungiMessaggio('thinking', 'Il coach sta scrivendo...');
 
-  try {
+  async function chiamaProxy(tentativo) {
     const systemPrompt = `Sei un AI Personal Trainer e Coach integrale. Il tuo stile è diretto, assertivo, energico — ispirato a Napoleon Hill, Tim Grover, Louise Hay. Mai conciliante, mai circolare, mai morbido. Sfida prima di confortare. Una domanda scomoda vale più di dieci risposte confortanti. Accountability senza cedimenti.
 
 Lavori sempre su tre dimensioni: coaching mentale (priorità assoluta), allenamento fisico e nutrizione. Prima di rispondere chiediti: il problema è tattico o identitario? Il coaching vero si fa sempre sul livello identitario.
@@ -2106,18 +2141,28 @@ Rispondi in italiano. Risposte concise e dirette. Usa markdown quando utile (## 
       })
     });
     const data = await res.json();
-    thinking.remove();
+    if (!data.content || !data.content[0]) throw new Error('Risposta non valida');
+    return data.content[0].text;
+  }
 
-    if (data.content && data.content[0]) {
-      const risposta = data.content[0].text;
-      chatHistory.push({ role: 'assistant', content: risposta });
-      aggiungiMessaggio('assistant', risposta);
-    } else {
-      aggiungiMessaggio('assistant', 'Errore nella risposta. Riprova.');
+  try {
+    let risposta;
+    try {
+      risposta = await chiamaProxy(1);
+    } catch(e) {
+      // Retry automatico dopo 2 secondi
+      thinking.textContent = 'Riconnessione in corso...';
+      await new Promise(r => setTimeout(r, 2000));
+      risposta = await chiamaProxy(2);
     }
+
+    thinking.remove();
+    chatHistory.push({ role: 'assistant', content: risposta });
+    aggiungiMessaggio('assistant', risposta);
+
   } catch(e) {
     thinking.remove();
-    aggiungiMessaggio('assistant', 'Connessione persa. Riprova.');
+    aggiungiMessaggio('assistant', 'Connessione persa. Riprova tra qualche secondo.');
   }
 
   sendBtn.disabled = false;
