@@ -1557,6 +1557,23 @@ CENA: Xkcal P:Xg C:Xg G:Xg` }]);
 
     const report = { ...r1, ...r2, ...r3, ...r4, ...r5 };
 
+    // CHIAMATA 6 — Piano allenamento COMPLETO (salvato nel bin per download e tab)
+    document.getElementById('spinner-msg').textContent = 'Genero la scheda completa...';
+    const t6 = await callClaude([{ role: 'user', content: `Scheda allenamento professionale. Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello} Limitazioni:${parametriSalvati.limitazioni||'nessuna'}. Somatotipo:${r1.somatotipo}.
+Scrivi: 1)PRINCIPI: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE(ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH-Lunedì: 5 esercizi con serie x rip e note tecniche 4)PULL-Mercoledì: 5 esercizi con serie x rip e note tecniche inclusi curl bicipiti hammer 5)TOTAL BODY-Venerdì: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. Max 600 parole.` }]);
+    const r6 = { piano_allenamento_completo: t6.trim() };
+
+    // CHIAMATA 7 — Piano nutrizionale COMPLETO (salvato nel bin per download e tab)
+    document.getElementById('spinner-msg').textContent = 'Genero il piano nutrizionale completo...';
+    const bmr = 10 * parametriSalvati.peso + 6.25 * parametriSalvati.altezza - 5 * parametriSalvati.eta + 5;
+    const tdeeAll = Math.round(bmr * 1.55) + 100;
+    const tdeeRip = Math.round(bmr * 1.55) - 250;
+    const t7 = await callClaude([{ role: 'user', content: `Piano nutrizionale professionale. Dati: ${params} Obiettivo:${parametriSalvati.obiettivo} Somatotipo:${r1.somatotipo} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}. TDEE allenamento:${tdeeAll}kcal riposo:${tdeeRip}kcal.
+Scrivi: 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa struttura con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. Max 600 parole.` }]);
+    const r7 = { piano_nutrizionale_completo: t7.trim() };
+
+    const reportCompleto = { ...r1, ...r2, ...r3, ...r4, ...r5, ...r6, ...r7 };
+
     // 4. Salva su JSONBin
     const rawBin = await binGet(BIN_ALLENAMENTO);
     let binData = {};
@@ -1567,7 +1584,7 @@ CENA: Xkcal P:Xg C:Xg G:Xg` }]);
       data: new Date().toISOString().slice(0, 10),
       parametri: parametriSalvati,
       foto: { frontale: urlFrontale, laterale: urlLaterale, posteriore: urlPosteriore },
-      report: report
+      report: reportCompleto
     };
 
     await binSet(BIN_ALLENAMENTO, JSON.stringify(binData));
@@ -1814,17 +1831,11 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
 function popolaTabAllenamentoAssessment(pianoTesto) {
   if (!pianoTesto) return;
 
-  // Rimuovi eventuale contenuto precedente
-  const esistente = document.getElementById('assessment-piano-allenamento');
-  if (esistente) esistente.remove();
-
   // Aggiorna testo intro
   const intro = document.querySelector('#tab-allenamento .intro');
-  if (intro) intro.textContent = 'Piano generato dall\'assessment AI. Registra i tuoi carichi nel log qui sotto.';
+  if (intro) intro.textContent = 'Piano aggiornato dall\'assessment AI. Registra i tuoi carichi qui sotto.';
 
-  // Costruisci HTML dal testo strutturato
-  const sessioni = { 'CORE': '🧘 Core — Pre-workout (ogni sessione)', 'PUSH': '💪 Push — Lunedì', 'PULL': '🔄 Pull — Mercoledì', 'TOTAL_BODY': '⚡ Total Body — Venerdì', 'NOTE': '📝 Note' };
-  let html = '';
+  // Estrai esercizi per sessione e aggiorna SCHEDA per il log carichi
   const lines = pianoTesto.split('\n').filter(l => l.trim());
   const sessioniData = {};
 
@@ -1833,54 +1844,13 @@ function popolaTabAllenamentoAssessment(pianoTesto) {
     if (colonIdx < 0) return;
     const key = line.slice(0, colonIdx).trim().toUpperCase();
     const val = line.slice(colonIdx + 1).trim();
-    const label = sessioni[key];
-    if (!label) return;
-
-    sessioniData[key] = val;
-
-    html += `<div style="margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #1a2b3a;">${label}</div>`;
-
-    if (key === 'NOTE') {
-      val.split(';').map(s => s.trim()).filter(Boolean).forEach(nota => {
-        html += `<div style="font-size:12px;color:#5a5248;padding:4px 0;border-bottom:1px solid #f0ede6;">• ${nota}</div>`;
-      });
-    } else {
-      html += `<table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead><tr style="background:#f5f3ef;">
-          <th style="padding:6px 8px;text-align:left;color:#8a7355;font-weight:600;">Esercizio</th>
-          <th style="padding:6px 8px;text-align:center;color:#8a7355;font-weight:600;white-space:nowrap;">Serie×Rip</th>
-        </tr></thead><tbody>`;
-
-      val.split(';').map(s => s.trim()).filter(Boolean).forEach((esercizio, i) => {
-        const match = esercizio.match(/^(.+?)\s+(\d+x[\d"]+\w*)\s*(.*)$/);
-        const nome = match ? match[1] : esercizio;
-        const serie = match ? match[2] : '';
-        const nota = match ? match[3] : '';
-        html += `<tr style="background:${i%2===0?'#fff':'#fafaf7'};border-bottom:1px solid #f0ede6;">
-          <td style="padding:6px 8px;color:#1a2b3a;">${nome}${nota ? `<br><span style="font-size:10px;color:#8a7355;">${nota}</span>` : ''}</td>
-          <td style="padding:6px 8px;text-align:center;font-weight:700;color:#1a2b3a;">${serie}</td>
-        </tr>`;
-      });
-      html += `</tbody></table>`;
+    if (['CORE', 'PUSH', 'PULL', 'TOTAL_BODY'].includes(key)) {
+      sessioniData[key] = val;
     }
-    html += `</div>`;
   });
 
-  if (html) {
-    const div = document.createElement('div');
-    div.id = 'assessment-piano-allenamento';
-    div.className = 'card';
-    div.style.cssText = 'margin-bottom:12px;';
-    div.innerHTML = `<div class="card-label" style="margin-bottom:12px;">📋 Piano da Assessment AI</div>${html}`;
-    const giorni = document.getElementById('giorni-row');
-    if (giorni) giorni.parentNode.insertBefore(div, giorni);
-    else document.getElementById('tab-allenamento').prepend(div);
-  }
-
-  // Aggiorna SCHEDA per il log carichi
-  const core = sessioniData.CORE ? sessioniData.CORE.split(';').map(s => s.trim().replace(/\d+x.*/,'').trim()).filter(Boolean) : ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
   const parseEs = val => val ? val.split(';').map(s => s.trim().replace(/\d+x.*/,'').trim()).filter(Boolean) : [];
+  const core = parseEs(sessioniData.CORE) || ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
 
   if (sessioniData.PUSH) SCHEDA.lunedi.esercizi = [...core, ...parseEs(sessioniData.PUSH)];
   if (sessioniData.PULL) SCHEDA.mercoledi.esercizi = [...core, ...parseEs(sessioniData.PULL)];
@@ -1936,33 +1906,28 @@ Posteriore: ${assessment.foto?.posteriore || 'non disponibile'}
 `;
   } else if (tipo === 'allenamento') {
     nomeFile = 'Piano_Allenamento.txt';
-    contenuto = `IL TUO COACH — PIANO DI ALLENAMENTO
-Data: ${assessment.data}
-=====================================
-
-${(r.piano_allenamento||'').split('\n').map(l => {
-  const colonIdx = l.indexOf(':');
-  if (colonIdx < 0) return l;
-  const key = l.slice(0, colonIdx).trim().toUpperCase();
-  const val = l.slice(colonIdx + 1).trim();
-  const labels = { 'CORE': '=== CORE (Prima di ogni sessione) ===', 'PUSH': '=== PUSH ===', 'PULL': '=== PULL ===', 'TOTAL_BODY': '=== TOTAL BODY ===', 'NOTE': '=== NOTE ===' };
-  if (labels[key]) return `\n${labels[key]}\n${val.split(';').map(e => '• ' + e.trim()).join('\n')}`;
-  return l;
-}).join('\n')}
-`;
+    // Usa il piano completo salvato nel bin se disponibile
+    if (r.piano_allenamento_completo) {
+      contenuto = `IL TUO COACH — PIANO DI ALLENAMENTO\nData: ${assessment.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n${r.piano_allenamento_completo}`;
+    } else {
+      contenuto = `IL TUO COACH — PIANO DI ALLENAMENTO\nData: ${assessment.data}\n=====================================\n\n${(r.piano_allenamento||'').split('\n').map(l => {
+        const colonIdx = l.indexOf(':');
+        if (colonIdx < 0) return l;
+        const key = l.slice(0, colonIdx).trim().toUpperCase();
+        const val = l.slice(colonIdx + 1).trim();
+        const labels = { 'CORE': '=== CORE (Prima di ogni sessione) ===', 'PUSH': '=== PUSH ===', 'PULL': '=== PULL ===', 'TOTAL_BODY': '=== TOTAL BODY ===', 'NOTE': '=== NOTE ===' };
+        if (labels[key]) return `\n${labels[key]}\n${val.split(';').map(e => '• ' + e.trim()).join('\n')}`;
+        return l;
+      }).join('\n')}`;
+    }
   } else if (tipo === 'nutrizione') {
     nomeFile = 'Piano_Nutrizionale.txt';
-    contenuto = `IL TUO COACH — PIANO NUTRIZIONALE
-Data: ${assessment.data}
-=====================================
-
-TARGET GIORNALIERO
-${(r.piano_dieta||'').split('\n').join('\n')}
-
-=====================================
-DISTRIBUZIONE PASTI
-${(r.distribuzione_pasti||'Non disponibile - rifai l\'assessment per generarla').split('\n').join('\n')}
-`;
+    // Usa il piano completo salvato nel bin se disponibile
+    if (r.piano_nutrizionale_completo) {
+      contenuto = `IL TUO COACH — PIANO NUTRIZIONALE\nData: ${assessment.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n${r.piano_nutrizionale_completo}`;
+    } else {
+      contenuto = `IL TUO COACH — PIANO NUTRIZIONALE\nData: ${assessment.data}\n=====================================\n\nTARGET GIORNALIERO\n${(r.piano_dieta||'').split('\n').join('\n')}\n\n=====================================\nDISTRIBUZIONE PASTI\n${(r.distribuzione_pasti||'Non disponibile').split('\n').join('\n')}`;
+    }
   }
 
   const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8' });
@@ -1998,29 +1963,45 @@ async function scaricaDoc(tipo) {
       prompt = `Assessment corporeo professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Vita:${p.vita} Fianchi:${p.fianchi} Petto:${p.petto} CosciaDx:${p.coscia_dx}. Obiettivo:${p.obiettivo}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}. Postura:${r.postura}. IAM:${r.iam}.
 Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath-Carter e implicazioni 2)POSTURA: analisi tre piani e raccomandazioni 3)COMPOSIZIONE CORPOREA: BMI e obiettivi realistici 4)IAM: livello e approccio 5)PRIORITA: top 5 azioni concrete 6)PROIEZIONE: 12 settimane con numeri. Max 600 parole totali.`;
 
-    } else if (tipo === 'allenamento') {
-      nomeFile = 'Piano_Allenamento.txt';
-      prompt = `Scheda allenamento professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a. Obiettivo:${p.obiettivo}. Attrezzatura:${p.attrezzatura}. Livello:${p.livello}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}.
-Scrivi: 1)PRINCIPI: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE(ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH-Lunedì: 5 esercizi con serie x rip e note tecniche 4)PULL-Mercoledì: 5 esercizi con serie x rip e note tecniche 5)TOTAL BODY-Venerdì: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. Max 600 parole.`;
-
-    } else if (tipo === 'nutrizione') {
-      nomeFile = 'Piano_Nutrizionale.txt';
-      const bmr = 10*(p.peso||80) + 6.25*(p.altezza||175) - 5*(p.eta||40) + 5;
-      const tdeeAll = Math.round(bmr*1.55)+100;
-      const tdeeRip = Math.round(bmr*1.55)-250;
-      prompt = `Piano nutrizionale professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Obiettivo:${p.obiettivo}. Somatotipo:${r.somatotipo}. Preferenze:${p.preferenze_alimentari||'nessuna'}. TDEE allenamento:${tdeeAll}kcal, riposo:${tdeeRip}kcal.
-Scrivi: 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa struttura con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE per preferenze indicate. Max 600 parole.`;
+    if (tipo === 'allenamento') {
+      // Usa piano completo dal bin se disponibile, altrimenti sintetico
+      const testo = r.piano_allenamento_completo || r.piano_allenamento || '';
+      const intestazione = `IL TUO COACH — PIANO DI ALLENAMENTO\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n`;
+      const blob = new Blob([intestazione + testo], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Piano_Allenamento.txt';
+      link.click();
+      URL.revokeObjectURL(url);
+      document.getElementById('spinner-overlay').classList.remove('active');
+      return;
     }
 
-    // Chiamata Claude per documento dettagliato
+    if (tipo === 'nutrizione') {
+      // Usa piano completo dal bin se disponibile, altrimenti sintetico
+      const testo = r.piano_nutrizionale_completo || `${r.piano_dieta || ''}\n\nDISTRIBUZIONE PASTI\n${r.distribuzione_pasti || 'Non disponibile'}`;
+      const intestazione = `IL TUO COACH — PIANO NUTRIZIONALE\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n`;
+      const blob = new Blob([intestazione + testo], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Piano_Nutrizionale.txt';
+      link.click();
+      URL.revokeObjectURL(url);
+      document.getElementById('spinner-overlay').classList.remove('active');
+      return;
+    }
+
+    // Solo per assessment — chiamata Claude dedicata
+    const bmr = 10*(p.peso||80) + 6.25*(p.altezza||175) - 5*(p.eta||40) + 5;
+    const prompt = `Assessment corporeo professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Vita:${p.vita} Fianchi:${p.fianchi} Petto:${p.petto} CosciaDx:${p.coscia_dx}. Obiettivo:${p.obiettivo}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}. Postura:${r.postura}. IAM:${r.iam}.
+Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath-Carter e implicazioni 2)POSTURA: analisi tre piani e raccomandazioni 3)COMPOSIZIONE CORPOREA: BMI e obiettivi realistici 4)IAM: livello e approccio 5)PRIORITA: top 5 azioni concrete 6)PROIEZIONE: 12 settimane con numeri. Max 600 parole totali.`;
+
     const res = await fetch('/.netlify/functions/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
     });
     const apiData = await res.json();
     document.getElementById('spinner-overlay').classList.remove('active');
@@ -2030,15 +2011,12 @@ Scrivi: 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIOR
       return;
     }
 
-    const testo = apiData.content[0].text;
-    const intestazione = `IL TUO COACH — ${nomeFile.replace('.txt','').replace(/_/g,' ').toUpperCase()}\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n`;
-    const contenuto = intestazione + testo;
-
-    const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8' });
+    const intestazione = `IL TUO COACH — ASSESSMENT COMPLETO\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n`;
+    const blob = new Blob([intestazione + apiData.content[0].text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = nomeFile;
+    link.download = 'Assessment_Completo.txt';
     link.click();
     URL.revokeObjectURL(url);
 
