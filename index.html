@@ -1951,17 +1951,77 @@ async function scaricaDoc(tipo) {
     const p = a.parametri || {};
     const r = a.report || {};
 
-    // Mostra spinner
     document.getElementById('spinner-overlay').classList.add('active');
-    document.getElementById('spinner-msg').textContent = 'Genero il documento...';
+    document.getElementById('spinner-msg').textContent = 'Preparo il documento...';
 
-    let prompt = '';
+    let contenuto = '';
     let nomeFile = '';
 
+    if (tipo === 'allenamento') {
+      nomeFile = 'Piano_Allenamento.txt';
+      const testo = r.piano_allenamento_completo || r.piano_allenamento || '';
+      contenuto = `IL TUO COACH — PIANO DI ALLENAMENTO\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n${testo}`;
+      const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = nomeFile;
+      link.click();
+      URL.revokeObjectURL(url);
+      document.getElementById('spinner-overlay').classList.remove('active');
+      return;
+    }
+
+    if (tipo === 'nutrizione') {
+      nomeFile = 'Piano_Nutrizionale.txt';
+      const testo = r.piano_nutrizionale_completo || `${r.piano_dieta || ''}\n\nDISTRIBUZIONE PASTI\n${r.distribuzione_pasti || 'Non disponibile'}`;
+      contenuto = `IL TUO COACH — PIANO NUTRIZIONALE\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n${testo}`;
+      const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = nomeFile;
+      link.click();
+      URL.revokeObjectURL(url);
+      document.getElementById('spinner-overlay').classList.remove('active');
+      return;
+    }
+
+    // Assessment — chiamata Claude dedicata
     if (tipo === 'assessment') {
       nomeFile = 'Assessment_Completo.txt';
-      prompt = `Assessment corporeo professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Vita:${p.vita} Fianchi:${p.fianchi} Petto:${p.petto} CosciaDx:${p.coscia_dx}. Obiettivo:${p.obiettivo}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}. Postura:${r.postura}. IAM:${r.iam}.
+      const prompt = `Assessment corporeo professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Vita:${p.vita} Fianchi:${p.fianchi} Petto:${p.petto} CosciaDx:${p.coscia_dx}. Obiettivo:${p.obiettivo}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}. Postura:${r.postura}. IAM:${r.iam}.
 Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath-Carter e implicazioni 2)POSTURA: analisi tre piani e raccomandazioni 3)COMPOSIZIONE CORPOREA: BMI e obiettivi realistici 4)IAM: livello e approccio 5)PRIORITA: top 5 azioni concrete 6)PROIEZIONE: 12 settimane con numeri. Max 600 parole totali.`;
+
+      const res = await fetch('/.netlify/functions/claude-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
+      });
+      const apiData = await res.json();
+      document.getElementById('spinner-overlay').classList.remove('active');
+
+      if (!apiData.content || !apiData.content[0]) {
+        alert('Errore nella generazione del documento. Riprova.');
+        return;
+      }
+
+      contenuto = `IL TUO COACH — ASSESSMENT COMPLETO\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n${apiData.content[0].text}`;
+      const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = nomeFile;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+  } catch(e) {
+    document.getElementById('spinner-overlay').classList.remove('active');
+    console.error('Errore download:', e);
+    alert('Errore nel download. Riprova.');
+  }
+}
 
     if (tipo === 'allenamento') {
       // Usa piano completo dal bin se disponibile, altrimenti sintetico
@@ -1992,40 +2052,6 @@ Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath
       document.getElementById('spinner-overlay').classList.remove('active');
       return;
     }
-
-    // Solo per assessment — chiamata Claude dedicata
-    const bmr = 10*(p.peso||80) + 6.25*(p.altezza||175) - 5*(p.eta||40) + 5;
-    const prompt = `Assessment corporeo professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Vita:${p.vita} Fianchi:${p.fianchi} Petto:${p.petto} CosciaDx:${p.coscia_dx}. Obiettivo:${p.obiettivo}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}. Postura:${r.postura}. IAM:${r.iam}.
-Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath-Carter e implicazioni 2)POSTURA: analisi tre piani e raccomandazioni 3)COMPOSIZIONE CORPOREA: BMI e obiettivi realistici 4)IAM: livello e approccio 5)PRIORITA: top 5 azioni concrete 6)PROIEZIONE: 12 settimane con numeri. Max 600 parole totali.`;
-
-    const res = await fetch('/.netlify/functions/claude-proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
-    });
-    const apiData = await res.json();
-    document.getElementById('spinner-overlay').classList.remove('active');
-
-    if (!apiData.content || !apiData.content[0]) {
-      alert('Errore nella generazione del documento. Riprova.');
-      return;
-    }
-
-    const intestazione = `IL TUO COACH — ASSESSMENT COMPLETO\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n`;
-    const blob = new Blob([intestazione + apiData.content[0].text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'Assessment_Completo.txt';
-    link.click();
-    URL.revokeObjectURL(url);
-
-  } catch(e) {
-    document.getElementById('spinner-overlay').classList.remove('active');
-    console.error('Errore download:', e);
-    alert('Errore nel download. Riprova.');
-  }
-}
 
 /* =========================================================
    PROFILO — TOGGLE REPORT SEZIONI
