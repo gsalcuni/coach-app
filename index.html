@@ -1641,19 +1641,86 @@ function formatPiano(testo) {
 
 function formatMarkdownLibero(testo) {
   if (!testo) return '';
-  return testo
-    .replace(/^#{1,3}\s+(.+)$/gm, '<div style="font-size:12px;font-weight:700;color:#1a2b3a;margin:12px 0 4px;padding-bottom:3px;border-bottom:1px solid #e0d9c8;">$1</div>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^[-•]\s+(.+)$/gm, '<div style="padding:4px 0;border-bottom:1px solid #f0ede6;font-size:12px;color:#3a4055;">• $1</div>')
-    .replace(/^\|(.+)\|$/gm, (match) => {
-      if (match.includes('---')) return '';
-      const cells = match.split('|').filter(c => c.trim());
-      return '<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #f0ede6;font-size:12px;">' +
-        cells.map(c => `<span style="flex:1;color:#3a4055;">${c.trim()}</span>`).join('') + '</div>';
-    })
-    .replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid #e0d9c8;margin:8px 0;">')
-    .replace(/\n\n/g, '<div style="height:8px;"></div>')
-    .replace(/\n/g, '<br>');
+  
+  const lines = testo.split('\n');
+  let html = '';
+  let inTable = false;
+  let tableHeaders = [];
+  let tableRows = [];
+
+  const flushTable = () => {
+    if (tableHeaders.length === 0 && tableRows.length === 0) return;
+    html += `<div style="overflow-x:auto;margin:8px 0;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">`;
+    if (tableHeaders.length > 0) {
+      html += `<thead><tr style="background:#f5f3ef;">` +
+        tableHeaders.map(h => `<th style="padding:6px 8px;text-align:left;color:#8a7355;font-weight:700;border-bottom:2px solid #e0d9c8;">${h}</th>`).join('') +
+        `</tr></thead>`;
+    }
+    if (tableRows.length > 0) {
+      html += `<tbody>` +
+        tableRows.map((row, i) =>
+          `<tr style="background:${i%2===0?'#fff':'#fafaf7'};">` +
+          row.map(cell => `<td style="padding:6px 8px;color:#3a4055;border-bottom:1px solid #f0ede6;">${cell}</td>`).join('') +
+          `</tr>`
+        ).join('') +
+        `</tbody>`;
+    }
+    html += `</table></div>`;
+    tableHeaders = [];
+    tableRows = [];
+    inTable = false;
+  };
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+
+    // Tabelle
+    if (trimmed.startsWith('|')) {
+      if (trimmed.includes('---')) {
+        // Riga separatore — segna che le prossime sono data rows
+        inTable = true;
+        return;
+      }
+      const cells = trimmed.split('|').slice(1, -1).map(c => c.trim().replace(/\*\*/g,''));
+      if (!inTable) {
+        tableHeaders = cells;
+      } else {
+        tableRows.push(cells);
+      }
+      return;
+    } else if (tableHeaders.length > 0 || tableRows.length > 0) {
+      flushTable();
+    }
+
+    // Heading 1
+    if (/^#\s+/.test(trimmed)) {
+      html += `<div style="font-size:14px;font-weight:800;color:#1a2b3a;margin:16px 0 8px;padding-bottom:4px;border-bottom:2px solid #1a2b3a;">${trimmed.replace(/^#+\s*/,'')}</div>`;
+    }
+    // Heading 2-3
+    else if (/^#{2,3}\s+/.test(trimmed)) {
+      html += `<div style="font-size:12px;font-weight:700;color:#8a7355;letter-spacing:0.08em;text-transform:uppercase;margin:14px 0 6px;padding-bottom:3px;border-bottom:1px solid #e0d9c8;">${trimmed.replace(/^#+\s*/,'')}</div>`;
+    }
+    // Separatore
+    else if (/^---+$/.test(trimmed)) {
+      html += `<hr style="border:none;border-top:1px solid #e0d9c8;margin:10px 0;">`;
+    }
+    // Lista
+    else if (/^[-•]\s+/.test(trimmed)) {
+      html += `<div style="padding:3px 0 3px 12px;font-size:12px;color:#3a4055;border-left:2px solid #d8cfba;margin:2px 0;">${trimmed.replace(/^[-•]\s+/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>`;
+    }
+    // Testo vuoto
+    else if (!trimmed) {
+      html += `<div style="height:6px;"></div>`;
+    }
+    // Testo normale
+    else {
+      html += `<div style="font-size:12px;color:#3a4055;line-height:1.6;margin:2px 0;">${trimmed.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>`;
+    }
+  });
+
+  flushTable();
+  return html;
 }
 
 function formatDieta(dieta, pasti, params) {
@@ -1880,22 +1947,49 @@ function popolaTabAllenamentoAssessment(pianoTesto) {
   const intro = document.querySelector('#tab-allenamento .intro');
   if (intro) intro.textContent = 'Piano aggiornato dall\'assessment AI. Registra i tuoi carichi qui sotto.';
 
-  const lines = pianoTesto.split('\n').filter(l => l.trim());
   const sessioniData = {};
+  const haStruttura = /^(CORE|PUSH|PULL|TOTAL_BODY|NOTE):/m.test(pianoTesto.toUpperCase());
 
-  // Cerca sia formato strutturato (PUSH: ...) che formato markdown (## PUSH / ### PUSH)
-  lines.forEach(line => {
-    const colonIdx = line.indexOf(':');
-    if (colonIdx < 0) return;
-    const key = line.slice(0, colonIdx).trim().toUpperCase().replace(/[^A-Z_]/g, '');
-    const val = line.slice(colonIdx + 1).trim();
-    if (['CORE', 'PUSH', 'PULL', 'TOTALBODY', 'TOTAL_BODY'].includes(key)) {
-      sessioniData[key === 'TOTALBODY' ? 'TOTAL_BODY' : key] = val;
-    }
-  });
+  if (haStruttura) {
+    pianoTesto.split('\n').filter(l => l.trim()).forEach(line => {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx < 0) return;
+      const key = line.slice(0, colonIdx).trim().toUpperCase().replace(/[^A-Z_]/g,'');
+      const val = line.slice(colonIdx + 1).trim();
+      if (['CORE','PUSH','PULL','TOTALBODY','TOTAL_BODY'].includes(key)) {
+        sessioniData[key === 'TOTALBODY' ? 'TOTAL_BODY' : key] = val;
+      }
+    });
+  } else {
+    // Formato markdown con tabelle
+    let sezioneCorrente = null;
+    pianoTesto.split('\n').forEach(line => {
+      const trimmed = line.trim();
+      if (/^#+/.test(trimmed)) {
+        if (/CORE/i.test(trimmed)) sezioneCorrente = 'CORE';
+        else if (/PUSH|LUNEDÌ|LUNEDI/i.test(trimmed)) sezioneCorrente = 'PUSH';
+        else if (/PULL|MERCOLEDÌ|MERCOLEDI/i.test(trimmed)) sezioneCorrente = 'PULL';
+        else if (/TOTAL.BODY|VENERDÌ|VENERDI/i.test(trimmed)) sezioneCorrente = 'TOTAL_BODY';
+        else sezioneCorrente = null;
+      } else if (sezioneCorrente && trimmed.startsWith('|') && !trimmed.includes('---')) {
+        const cells = trimmed.split('|').filter(c => c.trim());
+        if (cells.length > 0) {
+          // Se la prima colonna è '#' o un numero, prendi la seconda colonna
+          let nomeEs = cells[0].trim().replace(/\*\*/g,'');
+          if (/^#$|^\d+$/.test(nomeEs) && cells.length > 1) {
+            nomeEs = cells[1].trim().replace(/\*\*/g,'');
+          }
+          if (nomeEs && !/^(esercizio|serie|note|#|\d+)$/i.test(nomeEs)) {
+            if (!sessioniData[sezioneCorrente]) sessioniData[sezioneCorrente] = '';
+            sessioniData[sezioneCorrente] += (sessioniData[sezioneCorrente] ? ';' : '') + nomeEs;
+          }
+        }
+      }
+    });
+  }
 
   const parseEs = val => val ? val.split(';').map(s => s.trim().replace(/\d+x.*/,'').replace(/\*\*/g,'').trim()).filter(Boolean) : [];
-  const core = parseEs(sessioniData.CORE) || ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
+  const core = parseEs(sessioniData.CORE).length > 0 ? parseEs(sessioniData.CORE) : ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
 
   if (sessioniData.PUSH) SCHEDA.lunedi.esercizi = [...core, ...parseEs(sessioniData.PUSH)];
   if (sessioniData.PULL) SCHEDA.mercoledi.esercizi = [...core, ...parseEs(sessioniData.PULL)];
