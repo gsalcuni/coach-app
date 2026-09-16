@@ -2023,36 +2023,6 @@ Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath
   }
 }
 
-    if (tipo === 'allenamento') {
-      // Usa piano completo dal bin se disponibile, altrimenti sintetico
-      const testo = r.piano_allenamento_completo || r.piano_allenamento || '';
-      const intestazione = `IL TUO COACH — PIANO DI ALLENAMENTO\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n`;
-      const blob = new Blob([intestazione + testo], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'Piano_Allenamento.txt';
-      link.click();
-      URL.revokeObjectURL(url);
-      document.getElementById('spinner-overlay').classList.remove('active');
-      return;
-    }
-
-    if (tipo === 'nutrizione') {
-      // Usa piano completo dal bin se disponibile, altrimenti sintetico
-      const testo = r.piano_nutrizionale_completo || `${r.piano_dieta || ''}\n\nDISTRIBUZIONE PASTI\n${r.distribuzione_pasti || 'Non disponibile'}`;
-      const intestazione = `IL TUO COACH — PIANO NUTRIZIONALE\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n`;
-      const blob = new Blob([intestazione + testo], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'Piano_Nutrizionale.txt';
-      link.click();
-      URL.revokeObjectURL(url);
-      document.getElementById('spinner-overlay').classList.remove('active');
-      return;
-    }
-
 /* =========================================================
    PROFILO — TOGGLE REPORT SEZIONI
 ========================================================= */
