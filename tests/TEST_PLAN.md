@@ -49,8 +49,8 @@ Esito da riportare nel backlog: se la A è inaffidabile su iPhone → attivare i
 ## F5 — Chiamata 8 (documento assessment salvato), piani non troncati, storico degli assessment
 Automatici: `assessment.test.js` (nuovi tentativi, continuazione delle risposte tagliate con limite, archivio compatto, ordine, duplicati, massimo di voci, dimensione), `jsonbin-proxy.test.js` (patch con più chiavi), controlli statici sul flusso.
 Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di test; per il secondo assessment serve una seconda esecuzione):
-- ☐ Assessment completo sulla v2: termina senza errori (tempo totale da annotare)
-- ☐ Piano di allenamento: l'ultima sezione (NOTE) è completa, nessuna frase interrotta a metà
+- ☑ (14/11) Assessment completo sulla v2 con le tre foto: termina senza errori (tempo totale non annotato)
+- ☑ (14/11) I tre file TXT (assessment, allenamento, nutrizione) vengono generati e si scaricano; contenuto coerente con i tab (verificato a mano). Da confermare esplicitamente: ultima sezione dei piani senza frasi interrotte
 - ☐ Piano nutrizionale: arriva fino a SUPPLEMENTAZIONE e NOTE pratiche, nessuna frase interrotta
 - ☐ La scheda in tab Allenamento si popola con il core (4 esercizi) in Push, Pull e Total Body
 - ☐ Nel bin `…724`: `assessment.report.documento_assessment` presente; i log degli esercizi sono intatti
