@@ -24,6 +24,16 @@ Manuali:
 - ☐ Assessment di prova: dopo la generazione, i log degli esercizi sono ancora tutti presenti
 - ☐ Import di backup: l'assessment esistente non viene perso
 
+## F3 — Log per sessione (`esercizio_SESSIONE`) con lettura dello storico precedente
+Automatici: `log-keys.test.js` (chiavi distinte per sessione, voci vecchie visibili e marcate, ordinamento, chiave di eliminazione, assessment ignorato).
+Manuali (sulla v2, con una copia dei tuoi dati nel bin di test):
+- ☐ Copia il contenuto del bin di produzione nel bin `…724` (serve per provare con i dati veri)
+- ☐ Dead Bug in **Push**: le voci vecchie compaiono con l'etichetta "storico precedente"
+- ☐ Salva un Dead Bug in Push: compare in Push e **non** in Pull né in Total Body
+- ☐ Nel bin `…724` esiste la chiave `Dead Bug_PUSH` e la chiave `Dead Bug` è invariata
+- ☐ Elimina una voce nuova e una vecchia: spariscono dalla chiave giusta
+- ☐ La data "Ultima:" nella testata della card mostra la voce più recente
+
 ## Regressione sulle funzioni già esistenti (da rifare prima del merge)
 - ☐ Caricamento iniziale con bin vuoto: nessun errore in console
 - ☐ Scheda: giorni, esercizi, salvataggio di serie/ripetizioni/peso/note
@@ -34,7 +44,6 @@ Manuali:
 - ☐ Benchmark RAG sul deploy v2 (soglia: ≥ 4.5; riferimento 4.7). Sotto soglia = niente merge
 
 ## Prossime funzionalità (da compilare quando si implementano)
-- ☐ Fix chiave log per sessione (`esercizio_SESSIONE`) + migrazione dei log esistenti
 - ☐ Input vocale
 - ☐ Chiamata 8 + storico assessment come array (e fix del troncamento dei piani completi)
 - ☐ Memoria persistente + profilo

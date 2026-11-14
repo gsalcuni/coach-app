@@ -642,6 +642,20 @@ const SCHEDA = {
   venerdi: { titolo: 'Total Body', esercizi: ['Dead Bug', 'Leg Press', 'Leg Extension', 'Leg Curl', 'Hip Thrust', 'Calf Raise'] },
 };
 
+// LOG-KEYS-START
+// Chiave dei log per sessione: 'Nome esercizio_PUSH' ecc. Le voci vecchie (solo nome) restano leggibili come storico generico.
+const SESSIONE_ID = { lunedi: 'PUSH', mercoledi: 'PULL', venerdi: 'TOTAL_BODY' };
+function chiaveLog(nome, giorno) {
+  return nome + '_' + (SESSIONE_ID[giorno] || String(giorno).toUpperCase());
+}
+function storicoEsercizio(storicoObj, nome, giorno) {
+  const k = chiaveLog(nome, giorno);
+  const nuove = (storicoObj[k] || []).map(function(e) { return Object.assign({}, e, { _chiave: k }); });
+  const vecchie = (storicoObj[nome] || []).map(function(e) { return Object.assign({}, e, { _chiave: nome, _legacy: true }); });
+  return nuove.concat(vecchie).sort(function(a, b) { return (b.ts || 0) - (a.ts || 0); });
+}
+// LOG-KEYS-END
+
 let tipoGiorno = 'allenamento';
 let categoriaAperta = null;
 let giornoCorrente = 'lunedi';
@@ -912,7 +926,7 @@ eserciziList.addEventListener('click', async function(e) {
   if (msgEl) msgEl.textContent = ok ? 'Salvato ✓' : 'Errore salvataggio';
   setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 1500);
 
-  esercizioAperto = nome;
+  esercizioAperto = btn.dataset.nomeEs || nome;
   renderEsercizi();
 });
 
@@ -945,7 +959,7 @@ function renderEsercizi() {
 }
 
 function creaEsercizioCard(nome) {
-  const storicoEs = storico[nome] || [];
+  const storicoEs = storicoEsercizio(storico, nome, giornoCorrente);
   const ultima = storicoEs[0];
   const isOpen = esercizioAperto === nome;
 
@@ -993,7 +1007,8 @@ function creaEsercizioCard(nome) {
   const saveBtn = document.createElement('button');
   saveBtn.className = 'es-save-btn';
   saveBtn.textContent = 'Salva';
-  saveBtn.dataset.saveEs = nome;
+  saveBtn.dataset.saveEs = chiaveLog(nome, giornoCorrente);
+  saveBtn.dataset.nomeEs = nome;
 
   const inputsRow = document.createElement('div');
   inputsRow.className = 'es-inputs';
@@ -1037,12 +1052,12 @@ function creaEsercizioCard(nome) {
       const leftDiv = document.createElement('div');
       leftDiv.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;';
       leftDiv.innerHTML =
-        '<span style="font-size:10px;color:#8a7355;font-weight:600;">' + formatData(entry.data) + '</span>' +
+        '<span style="font-size:10px;color:#8a7355;font-weight:600;">' + formatData(entry.data) + (entry._legacy ? ' · storico precedente' : '') + '</span>' +
         '<span style="color:' + (i === 0 ? '#1a2b3a' : '#5a5248') + ';font-weight:' + (i === 0 ? '700' : '400') + ';">' + contenuto + '</span>';
 
       const delBtn = document.createElement('button');
       delBtn.textContent = '✕';
-      delBtn.dataset.deleteEs = nome;
+      delBtn.dataset.deleteEs = entry._chiave;
       delBtn.dataset.deleteTs = entry.ts;
       delBtn.style.cssText = 'border:none;background:none;color:#c0a0a0;cursor:pointer;font-size:11px;padding:2px 4px;flex-shrink:0;';
 
