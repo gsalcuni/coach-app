@@ -4,7 +4,7 @@ const fs = require('fs');
 const vm = require('vm');
 const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
 const src = html.split('// PIANO-PARSE-START')[1].split('// PIANO-PARSE-END')[0];
-const ctx = {}; vm.createContext(ctx); vm.runInContext(src + ';this.parse=parsePianoNutrizionale;this.norm=normTesto;', ctx);
+const ctx = {}; vm.createContext(ctx); vm.runInContext(src + ';this.parse=parsePianoNutrizionale;this.norm=normTesto;this.titoloPulito=titoloPulito;this.riconosciPasto=riconosciPasto;', ctx);
 const fx = (n) => fs.readFileSync(__dirname + '/fixtures/' + n, 'utf8');
 const attese = (t) => t.split('\n').map(r => r.trim()).filter(r => r && !/^-{3,}$/.test(r)).sort();
 const regDi = (p) => Array.from(p.registro).sort();
@@ -78,4 +78,34 @@ test('le variabili di stato del piano sono dichiarate prima del primo render', (
   const dich = html.indexOf('let pianoParsato');
   const primo = html.indexOf('renderNutrizione();', html.indexOf('function renderNutrizione'));
   assert.ok(dich > 0 && dich < primo);
+});
+
+test('formato C: pasti con emoji, maiuscole e "~", macro in tabella, titoli puliti', () => {
+  const t = fx('piano-sintetico-c.txt');
+  const p = ctx.parse(t);
+  assert.strictEqual(p.riuscito, true);
+  assert.strictEqual(Object.keys(p.giorni.allenamento.pasti).length, 5, 'tutti i pasti dell\'allenamento');
+  assert.strictEqual(p.giorni.allenamento.extra.length, 0);
+  assert.ok(p.giorni.allenamento.pasti.metapomeriggio, 'META POMERIGGIO');
+  assert.strictEqual(p.macroTab.allenamento.P, '175');
+  assert.strictEqual(p.macroTab.allenamento.C, '310');
+  assert.strictEqual(p.macroTab.allenamento.G, '80');
+  assert.strictEqual(p.macroTab.riposo.P, '170');
+  assert.strictEqual(p.preamboloResiduo.filter(r => r.trim()).length, 0);
+  assert.strictEqual(p.scartati.length, 1);
+  assert.strictEqual(p.altro.length, 0);
+  assert.strictEqual(JSON.stringify(regDi(p)), JSON.stringify(attese(t)));
+});
+
+test('titoli: niente numerazione, solo la prima iniziale maiuscola', () => {
+  const f = ctx.titoloPulito;
+  assert.strictEqual(f('5) NOTE PRATICHE'), 'Note pratiche');
+  assert.strictEqual(f('5. Note strategiche'), 'Note strategiche');
+  assert.strictEqual(f('**SUPPLEMENTAZIONE**'), 'Supplementazione');
+});
+
+test('refuso POMERIGIO / POMERRIGGIO riconosciuto', () => {
+  const f = ctx.riconosciPasto;
+  assert.strictEqual(f('**Meta Pomerigio — 200 kcal**'), 'metapomeriggio');
+  assert.strictEqual(f('### 🍊 Metà Pomeriggio'), 'metapomeriggio');
 });

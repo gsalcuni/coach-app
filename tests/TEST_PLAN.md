@@ -113,3 +113,8 @@ Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di 
 - [ ] Clic sul nome apre/chiude l'esercizio; storico ed eliminazione voce (✕) funzionano.
 - [ ] Push / Pull / Total Body: i core (Dead Bug, Bird Dog, Pallof Press, Plank TRX) sono presenti in tutte e tre.
 - [ ] Dopo un assessment la scheda si aggiorna e le card restano nello stesso stile.
+
+## F8 — Diario e Profilo (restyling)
+- `tests/diario-profilo-ui.test.js`: id/handler originali presenti, Brain Dump card evidenziata, lista report con IAM in evidenza, hero verde, pulsanti download.
+- Verifica visiva manuale a 390px (anteprima): nessuno scroll orizzontale, salvataggio diario e storico funzionanti.
+- Generazione piani: una chiamata per piano (allenamento, nutrizione), coperta da `static-checks.test.js`.

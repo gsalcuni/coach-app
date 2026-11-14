@@ -19,7 +19,8 @@ test('backup spostato nel Profilo, non più nella tab Allenamento', () => {
 
 test('card esercizio: tasto Registra, badge e dati salvataggio invariati', () => {
   assert.ok(html.includes("registra.textContent = '+ Registra'"));
-  assert.ok(html.includes("class=\"es-badge\""));
+  assert.ok(html.includes('es-presc'));
+  assert.ok(html.includes('cercaPrescrizione(PRESCRIZIONI'));
   assert.ok(html.includes("saveBtn.dataset.saveEs = chiaveLog(nome, giornoCorrente);"));
   assert.ok(html.includes("dataset.input = 'serie'") && html.includes("dataset.input = 'rip'") && html.includes("dataset.input = 'peso'") && html.includes("dataset.input = 'note'"));
   assert.ok(html.includes('Nessun dato registrato'));
@@ -36,4 +37,23 @@ test('niente emoji di sistema in Allenamento e nel pulsante chat', () => {
   const t = tab('tab-allenamento', 'tab-diario');
   const chat = html.slice(html.indexOf('id="chat-open-btn"'), html.indexOf('id="chat-open-btn"') + 400);
   assert.ok(!/[\u{1F300}-\u{1FAFF}\u{2B06}\u{2B07}]/u.test(t + chat));
+});
+
+test('prescrizioni dal piano: serie x rip e note per sessione, core condiviso', () => {
+  const vm = require('vm');
+  const src = html.split('// PRESC-START')[1].split('// PRESC-END')[0];
+  const ctx = {}; vm.createContext(ctx); vm.runInContext(src + ';this.f=estraiPrescrizioni;this.c=cercaPrescrizione;', ctx);
+  const piano = [
+    '## 2) CORE – OGNI SESSIONE', '| Esercizio | Serie x Rip | Note |', '|---|---|---|', '| Dead Bug | 2x10 | Lombare a terra |',
+    '## 3) PUSH – LUNEDÌ', '| # | Esercizio | Serie x Rip | Note Tecniche |', '|---|---|---|---|', '| 1 | Panca piana | 4x8 | Gomiti a 45° |',
+    '## 4) PULL – MERCOLEDÌ', '| 1 | Rematore | 3x10 | Schiena neutra |', '## 5) TOTAL BODY – VENERDÌ', '| 1 | Squat | 4x10 | Busto eretto |'
+  ].join('\n');
+  const p = ctx.f(piano);
+  assert.strictEqual(p.PUSH['Panca piana'].sr, '4x8');
+  assert.strictEqual(p.PUSH['Panca piana'].note, 'Gomiti a 45°');
+  assert.strictEqual(p.PULL['Rematore'].sr, '3x10');
+  assert.strictEqual(p.TOTAL_BODY['Squat'].sr, '4x10');
+  assert.strictEqual(ctx.c(p, 'PULL', 'Dead Bug').sr, '2x10');
+  assert.strictEqual(ctx.c(p, 'PULL', 'Inesistente'), null);
+  assert.strictEqual(ctx.c(null, 'PULL', 'X'), null);
 });

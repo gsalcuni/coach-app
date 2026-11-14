@@ -357,6 +357,89 @@
   .backup-row { margin-bottom:0; }
   .backup-btn { min-height:48px; border-radius:16px; border:1px solid var(--line); background:var(--bg); font-size:13px; }
   @media (prefers-reduced-motion: reduce) { .giorno-btn { transition:none; } }
+
+  .macro-tab { width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; margin:2px 0 6px; }
+  .macro-tab th { text-align:right; font-size:12px; font-weight:600; color:var(--muted); padding:6px 4px 8px; }
+  .macro-tab th:first-child, .macro-tab td:first-child { text-align:left; }
+  .macro-tab td { text-align:right; padding:10px 4px; border-top:1px solid var(--line); }
+  .macro-tab td:first-child { font-weight:600; white-space:nowrap; }
+  .macro-tab .dot { margin-right:8px; vertical-align:middle; }
+  .macro-tab .sel { color:var(--ink); font-weight:700; }
+  .macro-tab th.sel { color:var(--ink); }
+  .macro-timing-h { margin-top:16px; }
+  .kcal-check { font-size:12px; color:var(--muted); margin:10px 0 8px; font-variant-numeric:tabular-nums; }
+  .kcal-check.warn { color:var(--coral); }
+
+  .es-presc { font-size:12.5px; color:var(--muted); line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-variant-numeric:tabular-nums; }
+  .es-sr { font-weight:700; color:var(--ink); }
+  .es-ultima, .es-nessuno { display:flex; align-items:center; gap:6px; margin-top:8px; }
+  .es-ultima.has { color:var(--forest); font-weight:600; }
+  .es-nessuno { color:#9A958B; }
+  .es-badge { display:none; }
+
+  /* ===== Restyling v2: Diario e Profilo ===== */
+  .ic { flex:0 0 auto; vertical-align:-3px; margin-right:8px; }
+  .diario-section, .card { background:var(--surface); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); padding:18px; margin-bottom:14px; }
+  .diario-section-title, .card-label { display:flex; align-items:center; font-size:14px; font-weight:700; text-transform:none; letter-spacing:0; color:var(--ink); margin-bottom:14px; }
+  .intro { color:var(--muted); }
+  .diario-msg { color:var(--sage); }
+  .diario-lbl { font-size:12.5px; color:var(--muted); font-weight:600; margin:14px 0 6px; }
+  .diario-textarea { border:1px solid var(--line); border-radius:16px; background:#FBFAF7; padding:12px 14px; font-size:16px; }
+  .sintomo-row { flex-wrap:wrap; gap:10px; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .sintomo-row:last-child { border-bottom:none; padding-bottom:0; }
+  .sintomo-row input[type="text"] { flex:1 1 180px; height:44px; padding:0 14px; border:1px solid var(--line); border-radius:14px; background:#FBFAF7; font-size:16px; }
+  .sintomo-scala { display:flex; gap:6px; }
+  .remove-sintomo-btn { width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--muted); }
+  .add-sintomo-btn { min-height:44px; padding:0 18px; border-radius:999px; border:1px solid var(--line); background:var(--bg); font-weight:600; font-size:13px; }
+  .scale-row { flex-direction:column; align-items:flex-start; gap:8px; margin-bottom:14px; }
+  .scale-label { font-size:12.5px; color:var(--muted); font-weight:600; min-width:0; }
+  .scale-btns { gap:8px; flex-wrap:wrap; }
+  .scale-btn { min-width:44px; height:44px; width:auto; padding:0 14px; border-radius:999px; border:1px solid var(--line); background:#FBFAF7; color:var(--ink); font-variant-numeric:tabular-nums; transition:background .15s, border-color .15s, color .15s; }
+  .scale-btn.mini { min-width:40px; height:40px; padding:0 10px; font-size:13px; }
+  .scale-btn.sel { background:#E3EDE7; border-color:var(--sage); color:var(--forest); }
+  .check-stack { display:flex; flex-direction:column; gap:8px; margin-top:6px; }
+  .check-row { margin:0; padding:12px 14px; border:1px solid var(--line); border-radius:16px; background:#FBFAF7; min-height:48px; }
+  .check-row input[type="checkbox"] { width:22px; height:22px; accent-color:var(--forest); flex:0 0 auto; }
+  .check-row label { flex:1; font-size:14px; }
+  .check-feat { background:var(--forest); border-color:var(--forest); }
+  .check-feat label { color:#fff; font-weight:700; }
+  .check-feat input[type="checkbox"] { accent-color:#fff; }
+  .diario-save-btn { min-height:52px; border-radius:18px; background:var(--ink); font-size:15px; }
+  .storico-entry { border-bottom:1px solid var(--line); padding:14px 0; }
+  .storico-entry-date { font-size:12.5px; color:var(--ink); margin-bottom:4px; }
+  .storico-entry-body { font-size:12.5px; color:var(--muted); line-height:1.6; }
+  .storico-entry-body b { color:var(--ink); }
+
+  .profilo-stato { background:var(--ink); border-radius:24px; padding:22px 20px; box-shadow:var(--shadow); }
+  .hero-verde, #profilo-benvenuto .profilo-stato { background:var(--forest); }
+  .profilo-stato-label { font-size:12px; letter-spacing:0; text-transform:none; color:#B9D3C2; }
+  .profilo-stato-titolo { font-family:'Lora',Georgia,serif; font-size:22px; font-weight:600; }
+  .profilo-btn-primary { min-height:52px; border-radius:18px; background:var(--ink); }
+  .profilo-btn-secondary { min-height:48px; border-radius:18px; border:1px solid var(--line); background:var(--surface); }
+  .profilo-field label { color:var(--muted); font-size:12.5px; }
+  .profilo-field input, .profilo-field select, .profilo-field textarea { border:1px solid var(--line); border-radius:14px; background:#FBFAF7; font-size:16px; }
+  .profilo-field input, .profilo-field select { height:46px; padding:0 12px; }
+  .profilo-field textarea { padding:12px; }
+  .foto-upload-area { border-radius:18px; border-color:var(--line); background:#FBFAF7; }
+  .foto-icon { color:var(--muted); display:flex; justify-content:center; font-size:0; }
+  .foto-icon .ic { margin:0; }
+  .progress-step { height:4px; background:var(--track); }
+  .progress-step.done { background:var(--forest); }
+
+  .report-list { background:var(--surface); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:14px; }
+  .report-list .report-section { border:none; border-radius:0; margin:0; border-top:1px solid var(--line); }
+  .report-list .report-section:first-child { border-top:none; }
+  .report-head { min-height:60px; padding:0 18px; }
+  .report-head-title { display:flex; align-items:center; font-size:14px; }
+  .report-body { padding:0 18px 16px; }
+  .report-feat { background:#EEF4F0; }
+  .report-feat .report-head-title { color:var(--forest); font-size:15px; }
+  .report-feat .report-head { min-height:72px; }
+  .doc-box { margin-top:18px; }
+  .doc-titolo { display:flex; align-items:center; font-size:14px; font-weight:700; margin-bottom:12px; }
+  .doc-lista { display:flex; flex-direction:column; gap:8px; }
+  .doc-btn { display:flex; align-items:center; width:100%; min-height:48px; padding:0 16px; border-radius:16px; border:1px solid var(--line); background:var(--surface); font:inherit; font-size:13.5px; font-weight:600; color:var(--ink); cursor:pointer; text-align:left; }
+  @media (prefers-reduced-motion: reduce) { .scale-btn { transition:none; } }
 </style>
 </head>
 <body>
@@ -436,14 +519,14 @@
 
     <!-- SINTOMI FISICI -->
     <div class="diario-section">
-      <div class="diario-section-title">🩺 Sintomi fisici</div>
+      <div class="diario-section-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Sintomi fisici</div>
       <div id="sintomi-container"></div>
       <button class="add-sintomo-btn" id="add-sintomo-btn">+ Aggiungi sintomo</button>
     </div>
 
     <!-- SONNO -->
     <div class="diario-section">
-      <div class="diario-section-title">😴 Sonno</div>
+      <div class="diario-section-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>Sonno</div>
       <div class="scale-row">
         <span class="scale-label">Ore dormite</span>
         <div class="scale-btns" id="scale-sonno"></div>
@@ -456,7 +539,7 @@
 
     <!-- STATO EMOTIVO -->
     <div class="diario-section">
-      <div class="diario-section-title">🧠 Mente & Spirito</div>
+      <div class="diario-section-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>Mente & Spirito</div>
       <div class="scale-row">
         <span class="scale-label">Stato emotivo (1-5)</span>
         <div class="scale-btns" id="scale-emotivo"></div>
@@ -466,8 +549,8 @@
         <div class="scale-btns" id="scale-energia"></div>
       </div>
 
-      <div style="margin-top: 10px;">
-        <div class="check-row">
+      <div class="check-stack">
+        <div class="check-row check-feat">
           <input type="checkbox" id="check-braindump">
           <label for="check-braindump">Brain Dump fatto</label>
         </div>
@@ -482,22 +565,22 @@
       </div>
 
       <div style="margin-top: 10px;">
-        <div style="font-size: 12px; color: #5a5248; margin-bottom: 4px;">Azione individuata per domani</div>
+        <div class="diario-lbl">Azione individuata per domani</div>
         <textarea class="diario-textarea" id="azione-domani" rows="2" placeholder="Una sola azione concreta..."></textarea>
       </div>
 
       <div style="margin-top: 10px;">
-        <div style="font-size: 12px; color: #5a5248; margin-bottom: 4px;">Cosa sono fiero di oggi</div>
+        <div class="diario-lbl">Cosa sono fiero di oggi</div>
         <textarea class="diario-textarea" id="fiero-oggi" rows="2" placeholder="Una cosa concreta, anche piccola..."></textarea>
       </div>
 
       <div style="margin-top: 10px;">
-        <div style="font-size: 12px; color: #5a5248; margin-bottom: 4px;">Affermazione del giorno (Louise Hay / Hill)</div>
+        <div class="diario-lbl">Affermazione del giorno (Louise Hay / Hill)</div>
         <textarea class="diario-textarea" id="affermazione" rows="2" placeholder="Es: Sono qualcuno che genera valore reale e merita di essere riconosciuto..."></textarea>
       </div>
 
       <div style="margin-top: 10px;">
-        <div style="font-size: 12px; color: #5a5248; margin-bottom: 4px;">Note libere (evento significativo, riflessione...)</div>
+        <div class="diario-lbl">Note libere (evento significativo, riflessione...)</div>
         <textarea class="diario-textarea" id="note-libere" rows="3" placeholder="Scrivi quello che vuoi ricordare di oggi..."></textarea>
       </div>
     </div>
@@ -506,7 +589,7 @@
 
     <!-- STORICO DIARIO -->
     <div class="diario-section" id="storico-diario-section" style="margin-top: 16px; display:none;">
-      <div class="diario-section-title">📅 Storico ultimi 7 giorni</div>
+      <div class="diario-section-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Storico ultimi 7 giorni</div>
       <div id="storico-diario-list"></div>
     </div>
   </div>
@@ -532,7 +615,7 @@
       </div>
 
       <div class="card">
-        <div class="card-label">📐 Dati Antropometrici</div>
+        <div class="card-label"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Dati Antropometrici</div>
         <div class="profilo-two-col">
           <div class="profilo-field"><label>Peso (kg)</label><input type="number" id="p-peso" placeholder="82"></div>
           <div class="profilo-field"><label>Altezza (cm)</label><input type="number" id="p-altezza" placeholder="185"></div>
@@ -544,7 +627,7 @@
       </div>
 
       <div class="card">
-        <div class="card-label">📏 Misure Corporee (cm)</div>
+        <div class="card-label"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.4 2.4 0 0 1 0-3.4l2.6-2.6a2.4 2.4 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/></svg>Misure Corporee (cm)</div>
         <div class="profilo-two-col">
           <div class="profilo-field"><label>Circonferenza vita</label><input type="number" id="p-vita" placeholder="62"></div>
           <div class="profilo-field"><label>Circonferenza fianchi</label><input type="number" id="p-fianchi" placeholder="100"></div>
@@ -554,7 +637,7 @@
       </div>
 
       <div class="card">
-        <div class="card-label">🎯 Obiettivi & Profilo</div>
+        <div class="card-label"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Obiettivi & Profilo</div>
         <div class="profilo-field"><label>Obiettivo principale</label>
           <select id="p-obiettivo">
             <option value="ricomposizione">Ricomposizione corporea</option>
@@ -597,14 +680,14 @@
       </div>
 
       <div class="card">
-        <div class="card-label">📸 Carica le tre foto</div>
+        <div class="card-label"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3"/></svg>Carica le tre foto</div>
         <p style="font-size:12px;color:#5a5248;margin-bottom:14px;line-height:1.5;">Stai in piedi dritto, in shorts o costume. Sfondo neutro, buona luce. Il coach analizza postura e composizione corporea.</p>
 
         <div class="foto-grid">
           <div>
             <div class="foto-upload-area" id="area-frontale">
               <img class="foto-preview" id="prev-frontale">
-              <div class="foto-icon">🧍</div>
+              <div class="foto-icon"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M12 7v7m0 0-3 7m3-7 3 7M8 10h8"/></svg></div>
               <div class="foto-label">Frontale</div>
               <div class="foto-sublabel">Di fronte</div>
               <input type="file" accept="image/*" id="input-frontale" capture="environment">
@@ -613,7 +696,7 @@
           <div>
             <div class="foto-upload-area" id="area-laterale">
               <img class="foto-preview" id="prev-laterale">
-              <div class="foto-icon">🧍</div>
+              <div class="foto-icon"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M12 7v7m0 0-3 7m3-7 3 7M8 10h8"/></svg></div>
               <div class="foto-label">Laterale</div>
               <div class="foto-sublabel">Di lato</div>
               <input type="file" accept="image/*" id="input-laterale" capture="environment">
@@ -622,7 +705,7 @@
           <div>
             <div class="foto-upload-area" id="area-posteriore">
               <img class="foto-preview" id="prev-posteriore">
-              <div class="foto-icon">🧍</div>
+              <div class="foto-icon"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M12 7v7m0 0-3 7m3-7 3 7M8 10h8"/></svg></div>
               <div class="foto-label">Post.</div>
               <div class="foto-sublabel">Di spalle</div>
               <input type="file" accept="image/*" id="input-posteriore" capture="environment">
@@ -639,68 +722,70 @@
 
     <!-- REPORT ASSESSMENT -->
     <div id="profilo-report" style="display:none;">
-      <div class="profilo-stato" style="background:#2d5a3d;">
+      <div class="profilo-stato hero-verde">
         <div class="profilo-stato-label">Assessment completato</div>
         <div class="profilo-stato-titolo" id="report-somatotipo-title">Il tuo profilo</div>
         <div class="profilo-stato-desc" id="report-data-label"></div>
       </div>
 
+      <div class="report-list">
       <div class="report-section">
         <button class="report-head" onclick="toggleReport('r-somatotipo')">
-          <span class="report-head-title">🧬 Somatotipo</span>
-          <span class="chevron" id="chev-r-somatotipo">›</span>
+          <span class="report-head-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><path d="M12 7v7m0 0-3 7m3-7 3 7M8 10h8"/></svg>Somatotipo</span>
+          <span class="chevron" id="chev-r-somatotipo"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
         </button>
         <div class="report-body" id="r-somatotipo"></div>
       </div>
 
       <div class="report-section">
         <button class="report-head" onclick="toggleReport('r-postura')">
-          <span class="report-head-title">🦴 Valutazione Posturale</span>
-          <span class="chevron" id="chev-r-postura">›</span>
+          <span class="report-head-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Valutazione Posturale</span>
+          <span class="chevron" id="chev-r-postura"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
         </button>
         <div class="report-body" id="r-postura"></div>
       </div>
 
-      <div class="report-section">
+      <div class="report-section report-feat">
         <button class="report-head" onclick="toggleReport('r-iam')">
-          <span class="report-head-title">🧠 Indice di Aderenza Mentale</span>
-          <span class="chevron" id="chev-r-iam">›</span>
+          <span class="report-head-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>Indice di Aderenza Mentale</span>
+          <span class="chevron" id="chev-r-iam"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
         </button>
         <div class="report-body" id="r-iam"></div>
       </div>
 
       <div class="report-section">
         <button class="report-head" onclick="toggleReport('r-piano')">
-          <span class="report-head-title">🏋 Piano di Allenamento</span>
-          <span class="chevron" id="chev-r-piano">›</span>
+          <span class="report-head-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3.5 9v6"/><path d="M20.5 9v6"/><path d="M6.5 12h11"/></svg>Piano di Allenamento</span>
+          <span class="chevron" id="chev-r-piano"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
         </button>
         <div class="report-body" id="r-piano"></div>
       </div>
 
       <div class="report-section">
         <button class="report-head" onclick="toggleReport('r-dieta')">
-          <span class="report-head-title">🍽 Piano Nutrizionale</span>
-          <span class="chevron" id="chev-r-dieta">›</span>
+          <span class="report-head-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>Piano Nutrizionale</span>
+          <span class="chevron" id="chev-r-dieta"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
         </button>
         <div class="report-body" id="r-dieta"></div>
       </div>
 
       <div class="report-section">
         <button class="report-head" onclick="toggleReport('r-proiezione')">
-          <span class="report-head-title">📈 Proiezione 12 Settimane</span>
-          <span class="chevron" id="chev-r-proiezione">›</span>
+          <span class="report-head-title"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></svg>Proiezione 12 Settimane</span>
+          <span class="chevron" id="chev-r-proiezione"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
         </button>
         <div class="report-body" id="r-proiezione"></div>
+      </div>
       </div>
 
       <button class="profilo-btn-secondary" id="btn-nuovo-assessment" style="margin-top:8px;">Rifai assessment</button>
 
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e0d9c8;">
-        <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8a7355;margin-bottom:10px;font-weight:600;">📥 Scarica Documenti</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <button onclick="scaricaDoc('assessment')" style="width:100%;padding:10px;border-radius:6px;border:1px solid #d8cfba;background:#fff;font-size:12px;font-weight:600;color:#1a2b3a;cursor:pointer;text-align:left;">📄 Assessment Completo</button>
-          <button onclick="scaricaDoc('allenamento')" style="width:100%;padding:10px;border-radius:6px;border:1px solid #d8cfba;background:#fff;font-size:12px;font-weight:600;color:#1a2b3a;cursor:pointer;text-align:left;">🏋 Piano di Allenamento</button>
-          <button onclick="scaricaDoc('nutrizione')" style="width:100%;padding:10px;border-radius:6px;border:1px solid #d8cfba;background:#fff;font-size:12px;font-weight:600;color:#1a2b3a;cursor:pointer;text-align:left;">🍽 Piano Nutrizionale</button>
+      <div class="doc-box">
+        <div class="doc-titolo"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Scarica Documenti</div>
+        <div class="doc-lista">
+          <button class="doc-btn" onclick="scaricaDoc('assessment')"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/></svg>Assessment Completo</button>
+          <button class="doc-btn" onclick="scaricaDoc('allenamento')"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3.5 9v6"/><path d="M20.5 9v6"/><path d="M6.5 12h11"/></svg>Piano di Allenamento</button>
+          <button class="doc-btn" onclick="scaricaDoc('nutrizione')"><svg class="ic" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>Piano Nutrizionale</button>
         </div>
       </div>
     </div>
@@ -839,6 +924,7 @@ const ICONE = {
   grassi: '<path d="M12 22a7 7 0 0 0 7-7c0-4-7-13-7-13S5 11 5 15a7 7 0 0 0 7 7Z"/>',
   luna: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'
 };
+const ICONE_UI = { cam: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3"/>' };
 const CHEVRON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
 
 // RING-START
@@ -877,6 +963,40 @@ const SCHEDA = {
   venerdi: { titolo: 'Total Body', esercizi: [...CORE_DEFAULT, 'Leg Press', 'Leg Extension', 'Leg Curl', 'Hip Thrust', 'Calf Raise'] },
 };
 
+// PRESC-START
+// Serie x ripetizioni e note tecniche prescritte dal piano di allenamento (solo ciò che il piano scrive: nessun valore inventato).
+function estraiPrescrizioni(pianoTesto) {
+  const out = { CORE: {}, PUSH: {}, PULL: {}, TOTAL_BODY: {} };
+  let sez = null;
+  String(pianoTesto || '').split('\n').forEach(function (line) {
+    const t = line.trim();
+    if (/^#+/.test(t)) {
+      if (/CORE/i.test(t)) sez = 'CORE';
+      else if (/PUSH|LUNED[ÌI]/i.test(t)) sez = 'PUSH';
+      else if (/PULL|MERCOLED[ÌI]/i.test(t)) sez = 'PULL';
+      else if (/TOTAL.BODY|VENERD[ÌI]/i.test(t)) sez = 'TOTAL_BODY';
+      else sez = null;
+      return;
+    }
+    if (!sez || !t.startsWith('|') || t.includes('---')) return;
+    const celle = t.split('|').slice(1, -1).map(function (c) { return c.trim().replace(/\*\*/g, ''); });
+    if (!celle.length) return;
+    let i = 0;
+    if (/^#$|^\d+$/.test(celle[0]) && celle.length > 1) i = 1;
+    const nome = (celle[i] || '').replace(/\d+x.*/, '').trim();
+    if (!nome || /^(esercizio|serie|note|#|\d+)$/i.test(nome)) return;
+    const sr = celle[i + 1] || '';
+    if (!/\d/.test(sr)) return;
+    out[sez][nome] = { sr: sr, note: celle[i + 2] || '' };
+  });
+  return out;
+}
+function cercaPrescrizione(prescrizioni, sessione, nome) {
+  if (!prescrizioni) return null;
+  return (prescrizioni[sessione] && prescrizioni[sessione][nome]) || (prescrizioni.CORE && prescrizioni.CORE[nome]) || null;
+}
+// PRESC-END
+
 // LOG-KEYS-START
 // Chiave dei log per sessione: 'Nome esercizio_PUSH' ecc. Le voci vecchie (solo nome) restano leggibili come storico generico.
 const SESSIONE_ID = { lunedi: 'PUSH', mercoledi: 'PULL', venerdi: 'TOTAL_BODY' };
@@ -894,6 +1014,7 @@ function storicoEsercizio(storicoObj, nome, giorno) {
 let tipoGiorno = 'allenamento';
 let categoriaAperta = null;
 let pianoParsato = null;
+let PRESCRIZIONI = null;
 const pianoAperti = new Set(['macro', 'pasti']);
 let giornoCorrente = 'lunedi';
 let esercizioAperto = null;
@@ -1316,22 +1437,18 @@ function creaEsercizioCard(nome) {
 
   const head = document.createElement('button');
   head.className = 'es-head';
-  // Badge dell'ultimo carico registrato: usa solo i dati reali dell'ultima voce
-  let badge = '';
-  if (ultima) {
-    const pesoU = ultima.peso && !isNaN(ultima.peso) && ultima.peso > 0 ? ultima.peso : null;
-    const serieU = ultima.serie && !isNaN(ultima.serie) ? ultima.serie : null;
-    const ripU = ultima.ripetizioni && !isNaN(ultima.ripetizioni) ? ultima.ripetizioni : null;
-    if (pesoU) badge = '<span class="es-badge">' + pesoU + ' kg</span>';
-    else if (serieU || ripU) badge = '<span class="es-badge">' + (serieU ? serieU + 'x' : '') + (ripU ? ripU + ' rip' : '') + '</span>';
-  }
+  const presc = cercaPrescrizione(PRESCRIZIONI, SESSIONE_ID[giornoCorrente], nome);
+  const prescHtml = presc
+    ? '<div class="es-presc"><span class="es-sr">' + escHtml(presc.sr) + '</span>' + (presc.note ? '<span class="es-nota"> · ' + escHtml(presc.note) + '</span>' : '') + '</div>'
+    : '';
+  const iconaStorico = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>';
   head.innerHTML =
     '<div class="es-testo">' +
       '<div class="es-nome">' + nome + '</div>' +
+      prescHtml +
       (ultima
-        ? '<div class="es-ultima">Ultima: ' + formatData(ultima.data) + (ultima.serie && !isNaN(ultima.serie) ? ' · ' + ultima.serie + 'x' : '') + (ultima.ripetizioni && !isNaN(ultima.ripetizioni) ? ultima.ripetizioni + ' rip' : '') + (ultima.peso && !isNaN(ultima.peso) && ultima.peso > 0 ? ' · ' + ultima.peso + 'kg' : '') + (ultima.note ? ' · ' + ultima.note.substring(0,30) : '') + '</div>'
-        : '<div class="es-nessuno">Nessun dato registrato</div>') +
-      badge +
+        ? '<div class="es-ultima has">' + iconaStorico + '<span>Ultima: ' + formatData(ultima.data) + (ultima.serie && !isNaN(ultima.serie) ? ' · ' + ultima.serie + 'x' : '') + (ultima.ripetizioni && !isNaN(ultima.ripetizioni) ? ultima.ripetizioni + ' rip' : '') + (ultima.peso && !isNaN(ultima.peso) && ultima.peso > 0 ? ' · ' + ultima.peso + 'kg' : '') + (ultima.note ? ' · ' + ultima.note.substring(0,30) : '') + '</span></div>'
+        : '<div class="es-nessuno">' + iconaStorico + '<span>Nessun dato registrato</span></div>') +
     '</div>' +
     '<span class="chevron ' + (isOpen ? 'open' : '') + '">' + CHEVRON_SVG + '</span>';
   head.setAttribute('aria-expanded', String(isOpen));
@@ -1563,14 +1680,10 @@ function aggiungiSintomo(valore, intensita) {
   input.value = valore || '';
 
   const scaleDiv = document.createElement('div');
-  scaleDiv.style.display = 'flex';
-  scaleDiv.style.gap = '3px';
+  scaleDiv.className = 'sintomo-scala';
   [1,2,3,4,5].forEach(function(n) {
     const b = document.createElement('button');
-    b.className = 'scale-btn';
-    b.style.width = '28px';
-    b.style.height = '28px';
-    b.style.fontSize = '11px';
+    b.className = 'scale-btn mini';
     b.textContent = n;
     if (intensita && parseInt(intensita) === n) b.classList.add('sel');
     b.addEventListener('click', function() {
@@ -2010,22 +2123,20 @@ CENA: Xkcal P:Xg C:Xg G:Xg` }]);
     const tdeeAll = Math.round(bmr * 1.55) + 100;
     const tdeeRip = Math.round(bmr * 1.55) - 250;
     const ctxAllenamento = `Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello} Limitazioni:${parametriSalvati.limitazioni||'nessuna'}. Somatotipo:${r1.somatotipo}.`;
-    const formatoAllenamento = `Formato: titoli markdown "## N) NOME SEZIONE" e, per ogni sessione, una tabella con colonne # | Esercizio | Serie x Rip | Note Tecniche. Max 450 parole.`;
+    const formatoAllenamento = `Formato: titoli markdown "## N) NOME SEZIONE" e, per ogni sessione, una tabella con colonne # | Esercizio | Serie x Rip | Note Tecniche. Max 600 parole.`;
     const ctxNutrizione = `Dati: ${params} Obiettivo:${parametriSalvati.obiettivo} Somatotipo:${r1.somatotipo} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}. TDEE allenamento:${tdeeAll}kcal riposo:${tdeeRip}kcal.`;
 
-    const [t6a, t6b, t7a, t7b, t8] = await Promise.all([
-      callClaude([{ role: 'user', content: `Scheda allenamento professionale (parte 1 di 2). ${ctxAllenamento}
-Scrivi SOLO queste sezioni: 1)PRINCIPI DI ALLENAMENTO: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE (ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH - LUNEDÌ: 5 esercizi con serie x rip e note tecniche. ${formatoAllenamento}` }]),
-      callClaude([{ role: 'user', content: `Scheda allenamento professionale (parte 2 di 2). ${ctxAllenamento}
-Scrivi SOLO queste sezioni: 4)PULL - MERCOLEDÌ: 5 esercizi con serie x rip e note tecniche inclusi curl bicipiti hammer 5)TOTAL BODY - VENERDÌ: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. ${formatoAllenamento}` }]),
-      callClaude([{ role: 'user', content: `Piano nutrizionale professionale (parte 1 di 2). ${ctxNutrizione}
-Scrivi SOLO: titolo e macro target (proteine, carboidrati, grassi) per giorno di allenamento e di riposo; poi 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature. Max 450 parole.` }]),
-      callClaude([{ role: 'user', content: `Piano nutrizionale professionale (parte 2 di 2). ${ctxNutrizione}
-Scrivi SOLO queste sezioni: 3)GIORNO RIPOSO(${tdeeRip}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. Max 450 parole.` }]),
+    // Una sola chiamata per ogni piano (come in produzione): il modello vede tutto il piano insieme e le kcal dei pasti tornano.
+    // Se la risposta supera i token, callClaude continua da dove si è fermata.
+    const [t6, t7, t8] = await Promise.all([
+      chiamaClaude([{ role: 'user', content: `Scheda allenamento professionale. ${ctxAllenamento}
+Scrivi: 1)PRINCIPI DI ALLENAMENTO: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE (ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH - LUNEDÌ: 5 esercizi con serie x rip e note tecniche 4)PULL - MERCOLEDÌ: 5 esercizi con serie x rip e note tecniche inclusi curl bicipiti hammer 5)TOTAL BODY - VENERDÌ: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. ${formatoAllenamento}` }], { maxTokens: 2500 }).then(function (r) { if (r.troncato) console.warn('Piano allenamento ancora troncato'); return r.testo; }),
+      chiamaClaude([{ role: 'user', content: `Piano nutrizionale professionale. ${ctxNutrizione}
+Scrivi: titolo e macro target (proteine, carboidrati, grassi) per giorno di allenamento e di riposo; poi 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa struttura con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. Le kcal dei cinque pasti di ogni giorno devono sommare al totale di quel giorno. Max 600 parole.` }], { maxTokens: 2500 }).then(function (r) { if (r.troncato) console.warn('Piano nutrizionale ancora troncato'); return r.testo; }),
       callClaude([{ role: 'user', content: promptDocumentoAssessment(parametriSalvati, { somatotipo: r1.somatotipo, postura: r1.postura, iam: r1.iam }) }])
     ]);
-    const r6 = { piano_allenamento_completo: (t6a.trim() + '\n\n' + t6b.trim()).trim() };
-    const r7 = { piano_nutrizionale_completo: (t7a.trim() + '\n\n' + t7b.trim()).trim() };
+    const r6 = { piano_allenamento_completo: t6.trim() };
+    const r7 = { piano_nutrizionale_completo: t7.trim() };
     const r8 = { documento_assessment: t8.trim() };
 
     const reportCompleto = { ...r1, ...r2, ...r3, ...r4, ...r5, ...r6, ...r7, ...r8 };
@@ -2107,6 +2218,11 @@ const PASTI_ORDINE = [['colazione', 'Colazione'], ['metamattina', 'Metà Mattina
 function normTesto(t) {
   return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[*#_`]/g, ' ').replace(/\s+/g, ' ').trim();
 }
+function titoloPulito(t) {
+  const x = String(t || '').replace(/\*\*/g, '').replace(/^[^\p{L}\p{N}]+/u, '').replace(/^\d+\s*[.)\-–:]\s*/, '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+  return x ? x.charAt(0).toUpperCase() + x.slice(1).toLowerCase() : x;
+}
+function ePartePiano(t) { return /parte\s*\d+\s*(\/|di)\s*\d+/i.test(String(t || '')); }
 function classificaTitolo(n) {
   if (/macro/.test(n) && !/^giorno/.test(n)) return 'macro';
   if (/timing/.test(n)) return 'timing';
@@ -2119,15 +2235,16 @@ function classificaTitolo(n) {
 function riconosciPasto(riga) {
   const t = String(riga).trim();
   if (/^[-•]\s/.test(t) || /^\*\s/.test(t) || t.startsWith('|')) return null;
-  const n = normTesto(t.replace(/^#+\s*/, ''));
+  // via emoji, simboli e "~" iniziali: restano solo lettere e numeri
+  const n = normTesto(t.replace(/^#+\s*/, '')).replace(/^[^a-z0-9]+/, '');
   const tabella = [
     ['colazione', /^colazione\b/],
     ['metamattina', /^(meta ?mattina|spuntino (del )?(mattino|mattina)|mattina)\b/],
     ['pranzo', /^pranzo\b/],
-    ['metapomeriggio', /^(meta ?pomeriggio|merenda|spuntino (del )?pomeriggio|pomeriggio)\b/],
+    ['metapomeriggio', /^(meta ?pomer+i+g+i*o|merenda|spuntino (del )?pomer+i+g+i*o|pomer+i+g+i*o)\b/],
     ['cena', /^cena\b/]
   ];
-  const sembraTitolo = t.startsWith('**') || t.startsWith('#') || /kcal|:\s*$/i.test(t) || n.split(' ').length <= 3;
+  const sembraTitolo = t.startsWith('**') || t.startsWith('#') || /kcal|:\s*$/i.test(t) || n.split(' ').length <= 3 || /^[^\p{L}\p{N}]/u.test(t);
   if (!sembraTitolo) return null;
   for (let i = 0; i < tabella.length; i++) if (tabella[i][1].test(n)) return tabella[i][0];
   return null;
@@ -2146,7 +2263,7 @@ function estraiMacro(testo) {
 }
 function parsePianoNutrizionale(testo) {
   const righe = String(testo || '').split('\n');
-  const out = { titolo: null, preambolo: [], macro: { allenamento: null, riposo: null, generico: [] }, timing: null, giorni: { allenamento: null, riposo: null }, supp: null, note: null, altro: [], registro: [], riuscito: false };
+  const out = { titolo: null, preambolo: [], macro: { allenamento: null, riposo: null, generico: [] }, timing: null, giorni: { allenamento: null, riposo: null }, supp: null, note: null, altro: [], scartati: [], macroTab: { allenamento: null, riposo: null }, preamboloResiduo: [], registro: [], riuscito: false };
   let sez = null;
   const reg = function (t) { out.registro.push(t); };
   const dest = function () {
@@ -2166,6 +2283,8 @@ function parsePianoNutrizionale(testo) {
       if (/ripos/.test(n) && !out.macro.riposo) out.macro.riposo = sez;
       else if (/allenament/.test(n) && !out.macro.allenamento) out.macro.allenamento = sez;
       else out.macro.generico.push(sez);
+    } else if (ePartePiano(sez.titolo) && !sez.righe.some(function (r) { return r.trim(); })) {
+      out.scartati.push(sez.titolo);
     } else out.altro.push(sez);
     sez = null;
   };
@@ -2205,6 +2324,21 @@ function parsePianoNutrizionale(testo) {
     const g = out.giorni[d], m = out.macro[d];
     const sorgente = [g ? g.titolo : '', m ? m.titolo : '', m ? m.righe.join(' ') : ''].join(' ');
     out.macro[d + 'Valori'] = (g || m) ? estraiMacro(sorgente) : null;
+  });
+  const conPCG = function (v) { return v && (v.P || v.C || v.G); };
+  out.preambolo.forEach(function (r) {
+    const n = normTesto(r);
+    if (/macro/.test(n)) {
+      const d = /ripos/.test(n) ? 'riposo' : (/allenament/.test(n) ? 'allenamento' : null);
+      const v = estraiMacro(r);
+      if (d && conPCG(v) && !out.macroTab[d]) { out.macroTab[d] = v; return; }
+    }
+    out.preamboloResiduo.push(r);
+  });
+  ['allenamento', 'riposo'].forEach(function (d) {
+    const m = out.macro[d];
+    if (!out.macroTab[d] && m) { const v = estraiMacro([m.titolo].concat(m.righe).join(' ')); if (conPCG(v)) out.macroTab[d] = v; }
+    if (!out.macroTab[d] && conPCG(out.macro[d + 'Valori'])) out.macroTab[d] = out.macro[d + 'Valori'];
   });
   const haPasti = ['allenamento', 'riposo'].some(function (d) { return out.giorni[d] && Object.keys(out.giorni[d].pasti).length > 0; });
   out.riuscito = haPasti;
@@ -2259,22 +2393,23 @@ function renderPianoNutrizione() {
   const etichette = { allenamento: 'Giorno Allenamento', riposo: 'Giorno Riposo' };
   const md = function (righe) { return formatMarkdownLibero(righe.join('\n')); };
 
-  // Macro target + timing
-  let macroHtml = '<div class="macro-note">Target del piano AI</div><div class="macro-cards">';
-  ['allenamento', 'riposo'].forEach(function (d) {
-    const v = P.macro[d + 'Valori'];
-    if (!v) return;
-    const trovati = [['P', v.P], ['C', v.C], ['G', v.G]].filter(function (x) { return x[1]; }).map(function (x) { return x[0] + ' ' + x[1] + 'g'; }).join(' · ');
-    const corpo = (v.kcal || trovati) ? ((v.kcal ? '<b>' + v.kcal + ' kcal</b>' : '') + (trovati ? '<span>' + trovati + '</span>' : '')) : '<span>' + escHtml(v.raw) + '</span>';
-    macroHtml += '<div class="macro-card' + (d === gSel ? ' sel' : '') + '"><div class="macro-card-h">' + icona(d === 'allenamento' ? ICONE.allenamento : ICONE.riposo, 13) + etichette[d] + '</div>' + corpo + '</div>';
-  });
-  macroHtml += '</div>';
+  // Macro target: tabella Proteine/Carboidrati/Grassi per Allenamento e Riposo (grammi del piano)
+  let macroHtml = '';
+  const mt = P.macroTab;
+  if (mt.allenamento || mt.riposo) {
+    const cella = function (v, k) { return v && v[k] ? v[k] + 'g' : '—'; };
+    macroHtml += '<table class="macro-tab"><thead><tr><th></th><th class="' + (gSel === 'allenamento' ? 'sel' : '') + '">Target Allenamento</th><th class="' + (gSel === 'riposo' ? 'sel' : '') + '">Target Riposo</th></tr></thead><tbody>';
+    [['Proteine', 'P', 'var(--coral)'], ['Carboidrati', 'C', 'var(--amber)'], ['Grassi', 'G', 'var(--sage)']].forEach(function (r) {
+      macroHtml += '<tr><td><i class="dot" style="background:' + r[2] + '"></i>' + r[0] + '</td><td class="' + (gSel === 'allenamento' ? 'sel' : '') + '">' + cella(mt.allenamento, r[1]) + '</td><td class="' + (gSel === 'riposo' ? 'sel' : '') + '">' + cella(mt.riposo, r[1]) + '</td></tr>';
+    });
+    macroHtml += '</tbody></table>';
+  }
   P.macro.generico.forEach(function (m) { macroHtml += '<div class="macro-extra">' + md([m.titolo].concat(m.righe)) + '</div>'; });
-  ['allenamento', 'riposo'].forEach(function (d) { const m = P.macro[d]; if (m && m.righe.some(function (r) { return r.trim(); })) macroHtml += '<div class="macro-extra">' + md(m.righe) + '</div>'; });
-  if (P.preambolo.some(function (r) { return r.trim(); })) macroHtml += '<div class="macro-extra">' + md(P.preambolo) + '</div>';
+  if (!(mt.allenamento || mt.riposo)) ['allenamento', 'riposo'].forEach(function (d) { const m = P.macro[d]; if (m && m.righe.some(function (r) { return r.trim(); })) macroHtml += '<div class="macro-extra">' + md(m.righe) + '</div>'; });
+  if (P.preamboloResiduo.some(function (r) { return r.trim(); })) macroHtml += '<div class="macro-extra">' + md(P.preamboloResiduo) + '</div>';
   let timingHtml = '';
   if (P.timing) { timingHtml = md(P.timing.righe); window.__timingHtml = '<div class="sheet-sep"></div><div class="sheet-h">' + escHtml(P.timing.titolo) + '</div>' + timingHtml; }
-  if (timingHtml) macroHtml += '<div class="sheet-sep"></div><div class="sheet-h">Timing Nutrienti</div>' + timingHtml;
+  if (timingHtml) macroHtml += '<div class="sheet-h macro-timing-h">Timing Nutrienti</div>' + timingHtml;
 
   // Distribuzione pasti del giorno selezionato
   const g = P.giorni[gSel];
@@ -2290,18 +2425,24 @@ function renderPianoNutrizione() {
       const corpo = b ? ('<div class="pasto-titolo">' + escHtml(b.titolo) + '</div>' + md(b.righe)) : '<div class="piano-vuoto">Il piano non contiene questo pasto per questo giorno.</div>';
       pastiHtml += pianoDet('pasto:' + pp[0], escHtml(pp[1]) + chip, corpo, 'sub');
     });
+    const somma = PASTI_ORDINE.reduce(function (acc, pp) { const b = g.pasti[pp[0]]; const k = b && /(\d{2,4})\s*kcal/i.exec(b.titolo); return acc + (k ? parseInt(k[1], 10) : 0); }, 0);
+    const bersaglio = calcolaTarget().calorie;
+    if (somma > 0 && bersaglio > 0) {
+      const scarto = Math.abs(somma - bersaglio) / bersaglio;
+      pastiHtml += '<div class="kcal-check' + (scarto > 0.05 ? ' warn' : '') + '">Somma kcal dei pasti del piano: <b>' + somma + '</b> · target del giorno: <b>' + bersaglio + '</b>' + (scarto > 0.05 ? ' — il piano AI non rispetta il target: va rigenerato.' : '') + '</div>';
+    }
     g.extra.forEach(function (b, i) {
       pastiHtml += pianoDet('extra:' + gSel + ':' + i, escHtml(b.titolo), md(b.righe), 'sub');
     });
   }
 
   let html = '';
-  if (P.titolo) html += '<div class="piano-intro">' + escHtml(P.titolo) + '</div>';
+  if (P.titolo && !ePartePiano(P.titolo)) html += '<div class="piano-intro">' + escHtml(P.titolo) + '</div>';
   html += pianoDet('macro', 'Macro Target e Timing Nutrienti', macroHtml);
   html += pianoDet('pasti', 'Distribuzione Pasti', pastiHtml);
   if (P.supp) html += pianoDet('supp', 'Supplementazione', md(P.supp.righe));
-  if (P.note) html += pianoDet('note', escHtml(P.note.titolo), md(P.note.righe));
-  P.altro.forEach(function (a, i) { html += pianoDet('altro:' + i, escHtml(a.titolo), md(a.righe)); });
+  if (P.note) html += pianoDet('note', escHtml(titoloPulito(P.note.titolo)), md(P.note.righe));
+  P.altro.forEach(function (a, i) { html += pianoDet('altro:' + i, escHtml(titoloPulito(a.titolo)), md(a.righe)); });
   wrap.innerHTML = html;
   wrap.querySelectorAll('details[data-k]').forEach(function (d) {
     d.addEventListener('toggle', function () { if (d.open) pianoAperti.add(d.dataset.k); else pianoAperti.delete(d.dataset.k); });
@@ -2462,7 +2603,7 @@ function mostraReport(assessment) {
     newFotoDiv.id = 'foto-assessment-links';
     newFotoDiv.style.cssText = 'margin-top:12px;padding:12px 16px;background:#f5f3ef;border-radius:8px;';
     newFotoDiv.innerHTML = `
-      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8a7355;margin-bottom:8px;font-weight:600;">📸 Foto Assessment</div>
+      <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#8a7355;margin-bottom:8px;font-weight:600;">${icona(ICONE_UI.cam,13)}Foto Assessment</div>
       <div style="display:flex;gap:8px;">
         ${f.frontale ? `<a href="${f.frontale}" target="_blank" style="flex:1;text-align:center;padding:8px;background:#fff;border-radius:6px;font-size:11px;color:#1a2b3a;text-decoration:none;font-weight:600;border:1px solid #e0d9c8;">Frontale ↗</a>` : ''}
         ${f.laterale ? `<a href="${f.laterale}" target="_blank" style="flex:1;text-align:center;padding:8px;background:#fff;border-radius:6px;font-size:11px;color:#1a2b3a;text-decoration:none;font-weight:600;border:1px solid #e0d9c8;">Laterale ↗</a>` : ''}
@@ -2617,6 +2758,7 @@ function popolaTabAllenamentoAssessment(pianoTesto) {
   const intro = document.querySelector('#tab-allenamento .intro');
   if (intro) intro.textContent = 'Piano aggiornato dall\'assessment AI. Registra i tuoi carichi qui sotto.';
 
+  try { PRESCRIZIONI = estraiPrescrizioni(pianoTesto); } catch (e) { PRESCRIZIONI = null; }
   const sessioniData = {};
   const haStruttura = /^(CORE|PUSH|PULL|TOTAL_BODY|NOTE):/m.test(pianoTesto.toUpperCase());
 

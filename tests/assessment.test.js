@@ -149,12 +149,11 @@ test('il prompt del documento contiene i dati dell’assessment', () => {
 });
 
 // ---- controlli su index.html ----
-test('i piani completi sono generati in due parti ciascuno e in parallelo con il documento', () => {
-  assert.match(html, /Scheda allenamento professionale \(parte 1 di 2\)/);
-  assert.match(html, /Scheda allenamento professionale \(parte 2 di 2\)/);
-  assert.match(html, /Piano nutrizionale professionale \(parte 1 di 2\)/);
-  assert.match(html, /Piano nutrizionale professionale \(parte 2 di 2\)/);
-  assert.match(html, /const \[t6a, t6b, t7a, t7b, t8\] = await Promise\.all/);
+test('i piani completi sono generati con una sola chiamata ciascuno, in parallelo con il documento', () => {
+  assert.match(html, /Scheda allenamento professionale\. /);
+  assert.match(html, /Piano nutrizionale professionale\. /);
+  assert.ok(!/parte 1 di 2/.test(html));
+  assert.match(html, /const \[t6, t7, t8\] = await Promise\.all/);
 });
 
 test('assessment e archivio si salvano insieme con una sola scrittura per chiavi', () => {
