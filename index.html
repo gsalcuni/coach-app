@@ -696,7 +696,7 @@ async function binSet(bin, value) {
   if (!b) return;
   try {
     const r = await proxyCall({ op: 'info' });
-    if (r.status !== 200 || !r.data) { b.style.background = '#b91c1c'; b.textContent = 'ATTENZIONE: funzione dati non raggiungibile — salvataggi non disponibili'; return; }
+    if (r.status !== 200 || !r.data) { b.style.background = '#b91c1c'; b.textContent = 'ATTENZIONE: funzione dati — errore ' + r.status + (r.data && r.data.error ? ': ' + r.data.error : ' (nessuna risposta leggibile)') + ' — salvataggi non disponibili'; return; }
     const d = r.data;
     if (d.allenamento_produzione || d.diario_produzione) {
       b.style.background = '#b91c1c';
