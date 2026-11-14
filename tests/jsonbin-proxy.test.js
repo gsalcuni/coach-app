@@ -157,3 +157,29 @@ test('senza JSONBIN_KEY la funzione risponde con errore esplicito', async () => 
     assert.match(r.body, /JSONBIN_KEY non configurata/);
   } finally { process.env.JSONBIN_KEY = k; }
 });
+
+test('patch con più chiavi: una sola scrittura, le altre chiavi restano', async () => {
+  mockJsonbin(JSON.stringify({ 'Lat machine': [1], assessment: { data: 'vecchio' } }));
+  const r = await call({ op: 'patch', bin: 'allenamento', entries: { assessment: { data: 'nuovo' }, assessment_storico: [{ data: 'vecchio' }] } });
+  assert.strictEqual(r.statusCode, 200);
+  assert.strictEqual(puts, 1);
+  const o = JSON.parse(store.payload);
+  assert.deepStrictEqual(o['Lat machine'], [1]);
+  assert.strictEqual(o.assessment.data, 'nuovo');
+  assert.strictEqual(o.assessment_storico.length, 1);
+});
+
+test('patch con più chiavi: se una chiave è pericolosa non scrive nulla', async () => {
+  mockJsonbin('{}');
+  const r = await call({ op: 'patch', bin: 'allenamento', entries: { ok: 1, __proto__x: 1, constructor: 2 } });
+  assert.strictEqual(r.statusCode, 400);
+  assert.strictEqual(puts, 0);
+});
+
+test('patch con entries vuoto o con troppe chiavi: rifiutato', async () => {
+  mockJsonbin('{}');
+  assert.strictEqual((await call({ op: 'patch', bin: 'allenamento', entries: {} })).statusCode, 400);
+  const tante = {}; for (let i = 0; i < 11; i++) tante['k' + i] = i;
+  assert.strictEqual((await call({ op: 'patch', bin: 'allenamento', entries: tante })).statusCode, 400);
+  assert.strictEqual(puts, 0);
+});

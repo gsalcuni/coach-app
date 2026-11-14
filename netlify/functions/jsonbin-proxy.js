@@ -91,11 +91,19 @@ exports.handler = async (event) => {
       return reply(200, { ok: true });
     }
     if (req.op === 'patch') {
-      // Aggiorna UNA sola chiave dell'oggetto salvato: legge il contenuto più recente, cambia la chiave, riscrive.
+      // Aggiorna una o più chiavi dell'oggetto salvato: legge il contenuto più recente, cambia SOLO quelle chiavi, riscrive.
       // Evita che una copia vecchia in memoria nel browser sovrascriva altre chiavi (es. assessment).
-      const key = req.key;
-      if (typeof key !== 'string' || !key || key.length > 200 || ['__proto__', 'constructor', 'prototype'].includes(key)) {
-        return reply(400, { error: 'key non valida' });
+      // Forma singola: { key, value }. Forma multipla (una sola scrittura): { entries: { chiave: valore, ... } }.
+      const entries = req.entries && typeof req.entries === 'object' && !Array.isArray(req.entries)
+        ? req.entries
+        : (typeof req.key === 'string' ? { [req.key]: req.value } : null);
+      if (!entries) return reply(400, { error: 'key non valida' });
+      const chiavi = Object.keys(entries);
+      if (chiavi.length === 0 || chiavi.length > 10) return reply(400, { error: 'key non valida' });
+      for (const key of chiavi) {
+        if (!key || key.length > 200 || ['__proto__', 'constructor', 'prototype'].includes(key)) {
+          return reply(400, { error: 'key non valida' });
+        }
       }
       if (BIN_PRODUZIONE.includes(binId) && process.env.ALLOW_PROD_BINS !== '1') {
         return reply(403, { error: 'Scrittura su bin di produzione bloccata in questo ambiente' });
@@ -108,7 +116,7 @@ exports.handler = async (event) => {
       }
       if (current === null || current === undefined) current = {};
       if (typeof current !== 'object' || Array.isArray(current)) return reply(409, { error: 'Il bin non contiene un oggetto: scrittura annullata' });
-      current[key] = req.value;
+      for (const key of chiavi) current[key] = entries[key];
       const serialized = JSON.stringify(current);
       if (serialized.length > MAX_VALUE_CHARS) return reply(413, { error: 'contenuto troppo grande' });
       const w = await jsonbinRequest('PUT', binId, { payload: serialized });

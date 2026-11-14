@@ -723,6 +723,81 @@ async function binPatch(bin, key, value) {
   } catch (e) { console.error('binPatch error:', e); return false; }
 }
 
+// Aggiorna più chiavi del bin con UNA scrittura (merge lato server).
+async function binPatchMulti(bin, entries) {
+  try {
+    const r = await proxyCall({ op: 'patch', bin, entries });
+    console.log('binPatchMulti', bin, Object.keys(entries).join(','), r.status);
+    if (r.status !== 200) console.error('binPatchMulti errore:', r.data);
+    return r.status === 200 && !!(r.data && r.data.ok);
+  } catch (e) { console.error('binPatchMulti error:', e); return false; }
+}
+
+// ASSESSMENT-LIB-START
+// Chiamata a Claude con nuovi tentativi (rate limit / sovraccarico) e continuazione se la risposta è tagliata.
+async function callClaudeCompleto(fetchFn, messages, opz) {
+  const o = Object.assign({ maxTokens: 1000, maxContinuazioni: 2, tentativi: 3, attesaMs: 1500, useRAG: undefined,
+    sleep: function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); } }, opz || {});
+  async function unaChiamata(msgs, senzaRAG) {
+    for (let t = 0; t < o.tentativi; t++) {
+      const body = { model: 'claude-sonnet-4-6', max_tokens: o.maxTokens, messages: msgs };
+      if (senzaRAG) body.useRAG = false; else if (o.useRAG !== undefined) body.useRAG = o.useRAG;
+      const res = await fetchFn('/.netlify/functions/claude-proxy', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
+      let d = null;
+      try { d = await res.json(); } catch (e) {}
+      if (d && d.content && d.content[0]) return d;
+      const tipo = d && d.error && d.error.type;
+      const riprovabile = ['rate_limit_error', 'overloaded_error', 'api_error'].indexOf(tipo) >= 0 || (res.status >= 500);
+      if (riprovabile && t < o.tentativi - 1) { await o.sleep(o.attesaMs * (t + 1)); continue; }
+      throw new Error('Proxy error: ' + JSON.stringify(d).slice(0, 200));
+    }
+  }
+  let testo = '';
+  let msgs = messages;
+  for (let giro = 0; giro <= o.maxContinuazioni; giro++) {
+    const d = await unaChiamata(msgs, giro > 0);
+    testo += d.content[0].text;
+    if (d.stop_reason !== 'max_tokens') return { testo: testo, troncato: false };
+    msgs = messages.concat([
+      { role: 'assistant', content: testo.replace(/\s+$/, '') },
+      { role: 'user', content: 'Continua esattamente dal punto in cui ti sei interrotto, senza ripetere nulla e senza introduzioni.' }
+    ]);
+  }
+  return { testo: testo, troncato: true };
+}
+
+// Versione compatta di un assessment per l'archivio (senza i piani lunghi: il bin ha un limite di dimensione).
+function compattaAssessment(a) {
+  const r = a.report || {};
+  return {
+    completato: true,
+    data: a.data,
+    parametri: a.parametri,
+    foto: a.foto,
+    report: { somatotipo: r.somatotipo, postura: r.postura, iam: r.iam, iam_desc: r.iam_desc, proiezione: r.proiezione },
+    archiviato_il: new Date().toISOString().slice(0, 10)
+  };
+}
+// Aggiunge l'assessment precedente in testa all'archivio (più recente per primo), senza duplicati e con un massimo di voci.
+function aggiungiAStorico(archivio, precedente, max) {
+  const arr = Array.isArray(archivio) ? archivio : [];
+  if (!precedente || !precedente.completato) return arr;
+  const voce = compattaAssessment(precedente);
+  if (arr[0] && arr[0].data === voce.data && JSON.stringify(arr[0].foto) === JSON.stringify(voce.foto)) return arr;
+  return [voce].concat(arr).slice(0, max || 24);
+}
+function promptDocumentoAssessment(p, r) {
+  return 'Assessment corporeo professionale. Dati: ' + p.peso + 'kg ' + p.altezza + 'cm ' + p.eta + 'a ' + p.sesso + '. Vita:' + p.vita + ' Fianchi:' + p.fianchi + ' Petto:' + p.petto + ' CosciaDx:' + p.coscia_dx + '. Obiettivo:' + p.obiettivo + '. Limitazioni:' + (p.limitazioni || 'nessuna') + '. Somatotipo:' + r.somatotipo + '. Postura:' + r.postura + '. IAM:' + r.iam + '.\n' +
+    'Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath-Carter e implicazioni 2)POSTURA: analisi tre piani e raccomandazioni 3)COMPOSIZIONE CORPOREA: BMI e obiettivi realistici 4)IAM: livello e approccio 5)PRIORITA: top 5 azioni concrete 6)PROIEZIONE: 12 settimane con numeri. Max 600 parole totali.';
+}
+// ASSESSMENT-LIB-END
+
+async function chiamaClaude(messages, opz) {
+  return await callClaudeCompleto(function (u, o) { return fetch(u, o); }, messages, opz);
+}
+
 // Banner ambiente di test: mostra le ultime 6 cifre dei bin in uso (restituite dalla funzione).
 (async function () {
   const b = document.getElementById('banner-test');
@@ -1107,6 +1182,7 @@ document.getElementById('import-input').addEventListener('change', (e) => {
     try {
       const imported = JSON.parse(evt.target.result);
       if (!imported.assessment && storico && storico.assessment) imported.assessment = storico.assessment;
+      if (!imported.assessment_storico && storico && storico.assessment_storico) imported.assessment_storico = storico.assessment_storico;
       storico = imported;
       salvaStoricoLocale();
       renderEsercizi();
@@ -1530,15 +1606,11 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
       throw new Error('JSON non trovato in: ' + text.slice(0,200));
     }
 
+    // Chiamata a Claude con nuovi tentativi e continuazione automatica se la risposta viene tagliata.
     async function callClaude(messages) {
-      const r = await fetch('/.netlify/functions/claude-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages })
-      });
-      const d = await r.json();
-      if (!d.content || !d.content[0]) throw new Error('Proxy error: ' + JSON.stringify(d).slice(0,200));
-      return d.content[0].text;
+      const r = await chiamaClaude(messages);
+      if (r.troncato) console.warn('Risposta Claude ancora troncata dopo le continuazioni');
+      return r.testo;
     }
 
     document.getElementById('spinner-msg').textContent = 'Elaboro le foto...';
@@ -1619,24 +1691,34 @@ CENA: Xkcal P:Xg C:Xg G:Xg` }]);
 
     const report = { ...r1, ...r2, ...r3, ...r4, ...r5 };
 
-    // CHIAMATA 6 — Piano allenamento COMPLETO (salvato nel bin per download e tab)
-    document.getElementById('spinner-msg').textContent = 'Genero la scheda completa...';
-    const t6 = await callClaude([{ role: 'user', content: `Scheda allenamento professionale. Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello} Limitazioni:${parametriSalvati.limitazioni||'nessuna'}. Somatotipo:${r1.somatotipo}.
-Scrivi: 1)PRINCIPI: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE(ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH-Lunedì: 5 esercizi con serie x rip e note tecniche 4)PULL-Mercoledì: 5 esercizi con serie x rip e note tecniche inclusi curl bicipiti hammer 5)TOTAL BODY-Venerdì: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. Max 600 parole.` }]);
-    const r6 = { piano_allenamento_completo: t6.trim() };
-
-    // CHIAMATA 7 — Piano nutrizionale COMPLETO (salvato nel bin per download e tab)
-    document.getElementById('spinner-msg').textContent = 'Genero il piano nutrizionale completo...';
+    // CHIAMATE 6, 7 e 8 — i piani completi e il documento assessment, in parallelo.
+    // Ogni piano è diviso in due parti più corte, così nessuna risposta viene tagliata.
+    document.getElementById('spinner-msg').textContent = 'Genero scheda, piano nutrizionale e documento...';
     const bmr = 10 * parametriSalvati.peso + 6.25 * parametriSalvati.altezza - 5 * parametriSalvati.eta + 5;
     const tdeeAll = Math.round(bmr * 1.55) + 100;
     const tdeeRip = Math.round(bmr * 1.55) - 250;
-    const t7 = await callClaude([{ role: 'user', content: `Piano nutrizionale professionale. Dati: ${params} Obiettivo:${parametriSalvati.obiettivo} Somatotipo:${r1.somatotipo} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}. TDEE allenamento:${tdeeAll}kcal riposo:${tdeeRip}kcal.
-Scrivi: 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa struttura con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. Max 600 parole.` }]);
-    const r7 = { piano_nutrizionale_completo: t7.trim() };
+    const ctxAllenamento = `Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello} Limitazioni:${parametriSalvati.limitazioni||'nessuna'}. Somatotipo:${r1.somatotipo}.`;
+    const formatoAllenamento = `Formato: titoli markdown "## N) NOME SEZIONE" e, per ogni sessione, una tabella con colonne # | Esercizio | Serie x Rip | Note Tecniche. Max 450 parole.`;
+    const ctxNutrizione = `Dati: ${params} Obiettivo:${parametriSalvati.obiettivo} Somatotipo:${r1.somatotipo} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}. TDEE allenamento:${tdeeAll}kcal riposo:${tdeeRip}kcal.`;
 
-    const reportCompleto = { ...r1, ...r2, ...r3, ...r4, ...r5, ...r6, ...r7 };
+    const [t6a, t6b, t7a, t7b, t8] = await Promise.all([
+      callClaude([{ role: 'user', content: `Scheda allenamento professionale (parte 1 di 2). ${ctxAllenamento}
+Scrivi SOLO queste sezioni: 1)PRINCIPI DI ALLENAMENTO: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE (ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH - LUNEDÌ: 5 esercizi con serie x rip e note tecniche. ${formatoAllenamento}` }]),
+      callClaude([{ role: 'user', content: `Scheda allenamento professionale (parte 2 di 2). ${ctxAllenamento}
+Scrivi SOLO queste sezioni: 4)PULL - MERCOLEDÌ: 5 esercizi con serie x rip e note tecniche inclusi curl bicipiti hammer 5)TOTAL BODY - VENERDÌ: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. ${formatoAllenamento}` }]),
+      callClaude([{ role: 'user', content: `Piano nutrizionale professionale (parte 1 di 2). ${ctxNutrizione}
+Scrivi SOLO: titolo e macro target (proteine, carboidrati, grassi) per giorno di allenamento e di riposo; poi 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature. Max 450 parole.` }]),
+      callClaude([{ role: 'user', content: `Piano nutrizionale professionale (parte 2 di 2). ${ctxNutrizione}
+Scrivi SOLO queste sezioni: 3)GIORNO RIPOSO(${tdeeRip}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. Max 450 parole.` }]),
+      callClaude([{ role: 'user', content: promptDocumentoAssessment(parametriSalvati, { somatotipo: r1.somatotipo, postura: r1.postura, iam: r1.iam }) }])
+    ]);
+    const r6 = { piano_allenamento_completo: (t6a.trim() + '\n\n' + t6b.trim()).trim() };
+    const r7 = { piano_nutrizionale_completo: (t7a.trim() + '\n\n' + t7b.trim()).trim() };
+    const r8 = { documento_assessment: t8.trim() };
 
-    // 4. Salva su JSONBin
+    const reportCompleto = { ...r1, ...r2, ...r3, ...r4, ...r5, ...r6, ...r7, ...r8 };
+
+    // 4. Salva su JSONBin: l'assessment precedente passa nello storico, il nuovo diventa quello corrente.
     const nuovoAssessment = {
       completato: true,
       data: new Date().toISOString().slice(0, 10),
@@ -1645,10 +1727,16 @@ Scrivi: 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIOR
       report: reportCompleto
     };
 
-    // Aggiorna solo la chiave 'assessment': i log degli esercizi non vengono toccati.
-    const salvato = await binPatch(BIN_ALLENAMENTO, 'assessment', nuovoAssessment);
+    const rawFresco = await binGet(BIN_ALLENAMENTO);
+    let fresco = {};
+    try { fresco = rawFresco ? JSON.parse(rawFresco) : {}; }
+    catch (e) { throw new Error('Contenuto del bin non leggibile: assessment non salvato'); }
+    const nuovoStorico = aggiungiAStorico(fresco.assessment_storico, fresco.assessment);
+
+    // Una sola scrittura che aggiorna solo queste due chiavi: i log degli esercizi non vengono toccati.
+    const salvato = await binPatchMulti(BIN_ALLENAMENTO, { assessment: nuovoAssessment, assessment_storico: nuovoStorico });
     if (!salvato) throw new Error('Salvataggio assessment non riuscito');
-    if (typeof storico === 'object' && storico) storico.assessment = nuovoAssessment;
+    if (typeof storico === 'object' && storico) { storico.assessment = nuovoAssessment; storico.assessment_storico = nuovoStorico; }
 
     nascondiSpinner(interval);
     mostraReport(nuovoAssessment);
@@ -2187,26 +2275,20 @@ async function scaricaDoc(tipo) {
       return;
     }
 
-    // Assessment — chiamata Claude dedicata
+    // Assessment — il documento è salvato con l'assessment, quindi il download è sempre identico.
+    // Per gli assessment creati prima di questa versione, il documento viene generato una volta e poi salvato.
     if (tipo === 'assessment') {
       nomeFile = 'Assessment_Completo.txt';
-      const prompt = `Assessment corporeo professionale. Dati: ${p.peso}kg ${p.altezza}cm ${p.eta}a ${p.sesso}. Vita:${p.vita} Fianchi:${p.fianchi} Petto:${p.petto} CosciaDx:${p.coscia_dx}. Obiettivo:${p.obiettivo}. Limitazioni:${p.limitazioni||'nessuna'}. Somatotipo:${r.somatotipo}. Postura:${r.postura}. IAM:${r.iam}.
-Scrivi queste sezioni (concise ma complete): 1)SOMATOTIPO: classificazione Heath-Carter e implicazioni 2)POSTURA: analisi tre piani e raccomandazioni 3)COMPOSIZIONE CORPOREA: BMI e obiettivi realistici 4)IAM: livello e approccio 5)PRIORITA: top 5 azioni concrete 6)PROIEZIONE: 12 settimane con numeri. Max 600 parole totali.`;
-
-      const res = await fetch('/.netlify/functions/claude-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, messages: [{ role: 'user', content: prompt }] })
-      });
-      const apiData = await res.json();
-      document.getElementById('spinner-overlay').classList.remove('active');
-
-      if (!apiData.content || !apiData.content[0]) {
-        alert('Errore nella generazione del documento. Riprova.');
-        return;
+      let corpo = r.documento_assessment;
+      if (!corpo) {
+        const gen = await chiamaClaude([{ role: 'user', content: promptDocumentoAssessment(p, r) }]);
+        corpo = gen.testo.trim();
+        const aggiornato = Object.assign({}, a, { report: Object.assign({}, r, { documento_assessment: corpo }) });
+        const ok = await binPatch(BIN_ALLENAMENTO, 'assessment', aggiornato);
+        if (!ok) console.warn('Documento assessment generato ma non salvato: il prossimo download lo rigenera');
       }
-
-      contenuto = `IL TUO COACH — ASSESSMENT COMPLETO\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n${apiData.content[0].text}`;
+      document.getElementById('spinner-overlay').classList.remove('active');
+      contenuto = `IL TUO COACH — ASSESSMENT COMPLETO\nData: ${a.data}\nGenerato da: Il Tuo Coach AI Personal Trainer\n${'='.repeat(50)}\n\n${corpo}`;
       const blob = new Blob([contenuto], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');

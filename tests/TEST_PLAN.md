@@ -46,6 +46,20 @@ Manuali (da fare **sull'iPhone**, nei due modi):
 - ☐ Parlare in italiano frasi con termini tecnici (es. "Lat machine", "epicondilite", "Pallof Press"): annotare gli errori di trascrizione
 Esito da riportare nel backlog: se la A è inaffidabile su iPhone → attivare il task "evoluzione B".
 
+## F5 — Chiamata 8 (documento assessment salvato), piani non troncati, storico degli assessment
+Automatici: `assessment.test.js` (nuovi tentativi, continuazione delle risposte tagliate con limite, archivio compatto, ordine, duplicati, massimo di voci, dimensione), `jsonbin-proxy.test.js` (patch con più chiavi), controlli statici sul flusso.
+Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di test; per il secondo assessment serve una seconda esecuzione):
+- ☐ Assessment completo sulla v2: termina senza errori (tempo totale da annotare)
+- ☐ Piano di allenamento: l'ultima sezione (NOTE) è completa, nessuna frase interrotta a metà
+- ☐ Piano nutrizionale: arriva fino a SUPPLEMENTAZIONE e NOTE pratiche, nessuna frase interrotta
+- ☐ La scheda in tab Allenamento si popola con il core (4 esercizi) in Push, Pull e Total Body
+- ☐ Nel bin `…724`: `assessment.report.documento_assessment` presente; i log degli esercizi sono intatti
+- ☐ Download "Assessment Completo" due volte: i due file sono **identici**
+- ☐ Secondo assessment: nel bin compare `assessment_storico` con la voce precedente in forma compatta (senza piani lunghi); `assessment` è il nuovo
+- ☐ Con una copia dei dati di produzione (assessment del 16/09 senza documento): il primo download lo genera e lo salva, il secondo è identico
+- ☐ Dimensione del bin dopo l'assessment: da annotare, e da confrontare con il limite del piano JSONBin
+- ☐ Con la funzione Claude lenta o in errore temporaneo: l'assessment non resta a metà (annotare il comportamento)
+
 ## Regressione sulle funzioni già esistenti (da rifare prima del merge)
 - ☐ Caricamento iniziale con bin vuoto: nessun errore in console
 - ☐ Scheda: giorni, esercizi, salvataggio di serie/ripetizioni/peso/note
@@ -56,7 +70,6 @@ Esito da riportare nel backlog: se la A è inaffidabile su iPhone → attivare i
 - ☐ Benchmark RAG sul deploy v2 (soglia: ≥ 4.5; riferimento 4.7). Sotto soglia = niente merge
 
 ## Prossime funzionalità (da compilare quando si implementano)
-- ☐ Chiamata 8 + storico assessment come array (e fix del troncamento dei piani completi)
 - ☐ Memoria persistente + profilo
 - ☐ Diario collegato a prompt e chat
 - ☐ Check mensile
