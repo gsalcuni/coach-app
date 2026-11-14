@@ -194,6 +194,11 @@
   .chat-input { flex:1; padding:10px 12px; border:1px solid #d8cfba; border-radius:20px; font-size:14px; font-family:inherit; outline:none; background:#fafaf7; }
   .chat-send-btn { width:38px; height:38px; border-radius:50%; background:#1a2b3a; border:none; color:#f4f1ea; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; align-self:center; }
   .chat-send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .chat-mic-btn { width:38px; height:38px; border-radius:50%; background:#fafaf7; border:1px solid #d8cfba; font-size:16px; cursor:pointer; display:none; align-items:center; justify-content:center; flex-shrink:0; align-self:center; }
+  .chat-mic-btn.listening { background:#b91c1c; border-color:#b91c1c; color:#fff; animation:micpulse 1.2s infinite; }
+  @keyframes micpulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+  .chat-voice-status { font-size:12px; color:#8a7355; padding:4px 16px 0; min-height:16px; }
+  .chat-voice-status.errore { color:#b91c1c; }
 </style>
 </head>
 <body>
@@ -561,8 +566,10 @@
     <button class="chat-close-btn" id="chat-close-btn">×</button>
   </div>
   <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-voice-status" id="chat-voice-status" aria-live="polite"></div>
   <div class="chat-input-row">
     <input class="chat-input" id="chat-input" type="text" placeholder="Scrivi al tuo coach..." autocomplete="off">
+    <button class="chat-mic-btn" id="chat-mic-btn" type="button" title="Detta un messaggio" aria-label="Detta un messaggio">🎤</button>
     <button class="chat-send-btn" id="chat-send-btn">↑</button>
   </div>
 </div>
@@ -2337,6 +2344,94 @@ Rispondi in italiano. Risposte concise e dirette. Usa markdown quando utile (## 
 }
 
 // Event listeners chat
+// VOICE-START
+// Dettatura vocale (soluzione A: riconoscimento vocale del browser, Web Speech API).
+function unisciTestoDettato(base, parlato) {
+  const p = (parlato || '').trim();
+  const b = (base || '').replace(/\s+$/, '');
+  if (!p) return b;
+  return b ? b + ' ' + p : p;
+}
+function messaggioErroreDettatura(codice, standalone) {
+  switch (codice) {
+    case 'not-allowed':
+      return 'Microfono non consentito: abilitalo nelle impostazioni del browser per questo sito.';
+    case 'service-not-allowed':
+      return standalone
+        ? "La dettatura non è disponibile nell'app aggiunta alla schermata Home: aprila da Safari, oppure usa il microfono della tastiera."
+        : 'Dettatura non disponibile: su iPhone attiva Siri o la Dettatura nelle impostazioni, oppure usa il microfono della tastiera.';
+    case 'no-speech':
+      return 'Non ho sentito nulla. Riprova.';
+    case 'audio-capture':
+      return 'Microfono non trovato.';
+    case 'network':
+      return 'Servizio di riconoscimento non raggiungibile. Riprova.';
+    case 'aborted':
+      return '';
+    case 'start-failed':
+      return 'Impossibile avviare la dettatura. Riprova.';
+    default:
+      return 'Dettatura non riuscita (' + codice + ').';
+  }
+}
+function creaDettatura(Ctor, opzioni) {
+  const rec = new Ctor();
+  rec.lang = 'it-IT';
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+  let attiva = false;
+  let base = '';
+  rec.onresult = function (e) {
+    let finale = '', provvisorio = '';
+    for (let i = 0; i < e.results.length; i++) {
+      const t = e.results[i][0] ? e.results[i][0].transcript : '';
+      if (e.results[i].isFinal) finale += t; else provvisorio += t;
+    }
+    opzioni.onTesto(unisciTestoDettato(base, finale + provvisorio));
+  };
+  rec.onend = function () { attiva = false; opzioni.onStato(false); };
+  rec.onerror = function (e) { attiva = false; opzioni.onStato(false); opzioni.onErrore(e && e.error ? e.error : 'sconosciuto'); };
+  return {
+    attiva: function () { return attiva; },
+    toggle: function (testoAttuale) {
+      if (attiva) { rec.stop(); return; }
+      base = testoAttuale || '';
+      try { rec.start(); attiva = true; opzioni.onStato(true); }
+      catch (err) { attiva = false; opzioni.onStato(false); opzioni.onErrore('start-failed'); }
+    }
+  };
+}
+// VOICE-END
+
+(function initDettaturaChat() {
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const micBtn = document.getElementById('chat-mic-btn');
+  const statusEl = document.getElementById('chat-voice-status');
+  const input = document.getElementById('chat-input');
+  if (!Ctor || !micBtn || !input) return; // browser senza supporto: il pulsante resta nascosto
+  const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  let dett;
+  try {
+    dett = creaDettatura(Ctor, {
+      onTesto: function (t) { input.value = t; },
+      onStato: function (acceso) {
+        micBtn.classList.toggle('listening', acceso);
+        statusEl.className = 'chat-voice-status';
+        statusEl.textContent = acceso ? 'Sto ascoltando… tocca di nuovo per fermare' : '';
+      },
+      onErrore: function (codice) {
+        const msg = messaggioErroreDettatura(codice, standalone);
+        statusEl.className = 'chat-voice-status' + (msg ? ' errore' : '');
+        statusEl.textContent = msg;
+        console.warn('Dettatura:', codice);
+      }
+    });
+  } catch (e) { console.warn('Dettatura non inizializzata:', e); return; }
+  micBtn.style.display = 'flex';
+  micBtn.addEventListener('click', function () { dett.toggle(input.value); });
+})();
+
 document.getElementById('chat-open-btn').addEventListener('click', async () => {
   const drawer = document.getElementById('chat-drawer');
   drawer.classList.add('open');

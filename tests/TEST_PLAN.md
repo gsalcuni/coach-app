@@ -34,6 +34,18 @@ Manuali (sulla v2, con una copia dei tuoi dati nel bin di test):
 - ☐ Elimina una voce nuova e una vecchia: spariscono dalla chiave giusta
 - ☐ La data "Ultima:" nella testata della card mostra la voce più recente
 
+## F4 — Input vocale in chat (soluzione A: riconoscimento vocale del browser)
+Automatici: `voice.test.js` (lingua it-IT, avvio/stop, testo aggiunto a quello scritto, parte provvisoria + finale, errori e messaggi, start che fallisce, microfono visibile solo con supporto).
+Manuali (da fare **sull'iPhone**, nei due modi):
+- ☐ Safari normale: il microfono 🎤 è visibile nella chat; tocco → "Sto ascoltando…"; parlo → il testo compare nel campo; tocco di nuovo → si ferma
+- ☐ Il testo detto si aggiunge a quello già scritto e si può correggere prima di inviare
+- ☐ Con Siri/Dettatura disattivati: messaggio chiaro, nessun blocco della chat
+- ☐ App aggiunta alla schermata Home: se non funziona, appare il messaggio che spiega cosa fare (annotare il comportamento: serve per decidere se passare alla soluzione B)
+- ☐ Permesso microfono negato: messaggio chiaro
+- ☐ Su PC (Chrome): stesso comportamento
+- ☐ Parlare in italiano frasi con termini tecnici (es. "Lat machine", "epicondilite", "Pallof Press"): annotare gli errori di trascrizione
+Esito da riportare nel backlog: se la A è inaffidabile su iPhone → attivare il task "evoluzione B".
+
 ## Regressione sulle funzioni già esistenti (da rifare prima del merge)
 - ☐ Caricamento iniziale con bin vuoto: nessun errore in console
 - ☐ Scheda: giorni, esercizi, salvataggio di serie/ripetizioni/peso/note
@@ -44,7 +56,6 @@ Manuali (sulla v2, con una copia dei tuoi dati nel bin di test):
 - ☐ Benchmark RAG sul deploy v2 (soglia: ≥ 4.5; riferimento 4.7). Sotto soglia = niente merge
 
 ## Prossime funzionalità (da compilare quando si implementano)
-- ☐ Input vocale
 - ☐ Chiamata 8 + storico assessment come array (e fix del troncamento dei piani completi)
 - ☐ Memoria persistente + profilo
 - ☐ Diario collegato a prompt e chat
