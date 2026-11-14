@@ -27,10 +27,10 @@ Manuali:
 ## F3 — Log per sessione (`esercizio_SESSIONE`) con lettura dello storico precedente
 Automatici: `log-keys.test.js` (chiavi distinte per sessione, voci vecchie visibili e marcate, ordinamento, chiave di eliminazione, assessment ignorato).
 Manuali (sulla v2, con una copia dei tuoi dati nel bin di test):
-- ☐ Copia il contenuto del bin di produzione nel bin `…724` (serve per provare con i dati veri)
-- ☐ Dead Bug in **Push**: le voci vecchie compaiono con l'etichetta "storico precedente"
-- ☐ Salva un Dead Bug in Push: compare in Push e **non** in Pull né in Total Body
-- ☐ Nel bin `…724` esiste la chiave `Dead Bug_PUSH` e la chiave `Dead Bug` è invariata
+- ☑ (14/11) Scheda di default: il core (Dead Bug, Bird Dog, Pallof Press, Plank TRX) è in Push, Pull e Total Body
+- ☑ (14/11) Un esercizio salvato in una sessione compare solo lì (verificato a mano su bin di test vuoto)
+- ☐ Con una copia dei dati di produzione nel bin `…724`: le voci vecchie compaiono con l'etichetta "storico precedente"
+- ☐ Nel bin `…724` esiste la chiave per sessione (es. `Dead Bug_PUSH`) e la chiave vecchia `Dead Bug` è invariata
 - ☐ Elimina una voce nuova e una vecchia: spariscono dalla chiave giusta
 - ☐ La data "Ultima:" nella testata della card mostra la voce più recente
 
