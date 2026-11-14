@@ -92,3 +92,8 @@ Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di 
 - [ ] Titolo di pagina cambia per tab; tagline solo su Nutrizione.
 - [ ] Dopo un assessment: card "Piano Nutrizionale da Assessment AI" e "Distribuzione Pasti" visibili, senza emoji.
 - [ ] Nav flottante leggibile su iPhone e PC; tasto chat non copre la nav.
+
+### F6b — Dettaglio pasti in accordion
+- [ ] Dopo un assessment: il piano nutrizionale è diviso in accordion per titolo; il primo è aperto; i testi coincidono con il documento scaricato.
+- [ ] Se il piano contiene una sezione "Timing", il suo testo compare anche nel pannello (i).
+- [ ] Formato a doppia colonna: ogni pasto è un accordion con kcal e P/C/G per Allen. e Riposo.

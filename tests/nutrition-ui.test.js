@@ -45,3 +45,24 @@ test('nessuna emoji di sistema nella tab Nutrizione e nella nav', () => {
   const nav = html.slice(html.indexOf('<nav'), html.indexOf('</nav>'));
   assert.ok(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(t + nav));
 });
+
+test('piano in accordion: nessuna riga persa, titoli come intestazioni', () => {
+  const src = html.split('// PIANO-ACC-START')[1].split('// PIANO-ACC-END')[0];
+  const ctx = {}; vm.createContext(ctx); vm.runInContext(src + ';this.f=dividiPianoInSezioni;', ctx);
+  const testo = 'Intro libera\n## Colazione\n- A 50g\n- B 20g\n### Variante\nnota\n## Pranzo\n| a | b |\n|---|---|\n| 1 | 2 |\n## Timing nutrienti\ntesto';
+  const sez = ctx.f(testo);
+  const titoli = sez.map(x => x.titolo);
+  assert.deepStrictEqual(Array.from(titoli), [null, 'Colazione', 'Pranzo', 'Timing nutrienti']);
+  const righe = sez.flatMap(x => Array.from(x.righe)).filter(r => r.trim());
+  const attese = testo.split('\n').filter(r => r.trim() && !/^##\s/.test(r));
+  assert.strictEqual(JSON.stringify(righe), JSON.stringify(attese));
+  assert.strictEqual(sez[1].righe.includes('### Variante'), true);
+});
+
+test('piano senza titoli: una sola sezione senza intestazione', () => {
+  const src = html.split('// PIANO-ACC-START')[1].split('// PIANO-ACC-END')[0];
+  const ctx = {}; vm.createContext(ctx); vm.runInContext(src + ';this.f=dividiPianoInSezioni;', ctx);
+  const sez = ctx.f('solo testo\nsecondo rigo');
+  assert.strictEqual(sez.length, 1);
+  assert.strictEqual(sez[0].titolo, null);
+});

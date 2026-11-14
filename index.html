@@ -284,7 +284,7 @@
 
   /* Il testo "Come usarlo" resta nella pagina come àncora per il piano generato dall'assessment, ma si legge nel pannello (i) */
   #tab-nutrizione .footnote { display:none; }
-  #piano-nutrizionale-completo-card, #tab-nutrizione > .card { border-radius:24px; border-color:var(--line); box-shadow:var(--shadow); margin-bottom:14px; }
+  #piano-nutrizionale-completo-card, #tab-nutrizione > .card, #distribuzione-pasti-nutrizione > .card { border-radius:24px; border-color:var(--line); box-shadow:var(--shadow); margin-bottom:14px; }
 
   .sheet-backdrop { position:fixed; inset:0; z-index:200; display:none; align-items:flex-end; justify-content:center; background:rgba(26,43,60,0.38); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
   .sheet-backdrop.open { display:flex; }
@@ -299,6 +299,23 @@
     .ring circle, .nav-btn, .day-pill, #macro-accordions .chevron { transition:none; }
     #macro-accordions .macro-body.open, .sheet { animation:none; }
   }
+
+  .piano-wrap { margin-top:4px; }
+  .piano-intro { font-size:13px; color:var(--ink); line-height:1.6; margin-bottom:10px; }
+  .piano-acc { border:1px solid var(--line); border-radius:18px; background:var(--surface); margin-bottom:10px; overflow:hidden; }
+  .piano-acc > summary { list-style:none; display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:56px; padding:0 16px; cursor:pointer; font-weight:700; font-size:14px; color:var(--ink); }
+  .piano-acc > summary::-webkit-details-marker { display:none; }
+  .piano-acc-t { display:flex; align-items:center; min-width:0; }
+  .piano-acc-ch { display:inline-flex; color:var(--muted); transition:transform .2s; flex:0 0 auto; }
+  .piano-acc[open] > summary .piano-acc-ch { transform:rotate(90deg); }
+  .piano-acc-b { padding:2px 16px 14px; border-top:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  .pasto-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-top:12px; }
+  .pasto-col { background:var(--bg); border-radius:14px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; font-size:13px; }
+  .pasto-col-h { font-size:12px; color:var(--muted); font-weight:600; }
+  .pasto-col span { font-size:12px; color:var(--muted); }
+  .sheet-sep { height:1px; background:var(--line); margin:16px 0 12px; }
+  .sheet-h { font-weight:700; margin-bottom:6px; }
+  @media (prefers-reduced-motion: reduce) { .piano-acc-ch { transition:none; } }
 </style>
 </head>
 <body>
@@ -772,6 +789,10 @@ const ICONE = {
   sole: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
   mela: '<path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>',
   bevanda: '<path d="M5 8h14l-1.5 13h-11Z"/><path d="M8 8l1-5h6l1 5"/>',
+  fiamma: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/>',
+  proteine: '<path d="M12 2C8 2 4 8 4 14a8 8 0 0 0 16 0c0-6-4-12-8-12Z"/>',
+  carbo: '<path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/>',
+  grassi: '<path d="M12 22a7 7 0 0 0 7-7c0-4-7-13-7-13S5 11 5 15a7 7 0 0 0 7 7Z"/>',
   luna: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'
 };
 const CHEVRON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
@@ -1012,7 +1033,7 @@ async function salvaStoricoLocale(chiave) {
   const chiudi = document.getElementById('nut-info-close');
   const nota = document.querySelector('#tab-nutrizione .footnote');
   function mostra(v) { sheet.classList.toggle('open', v); sheet.hidden = !v; if (v) chiudi.focus(); else apri.focus(); }
-  apri.addEventListener('click', function () { body.innerHTML = nota ? nota.innerHTML : ''; mostra(true); });
+  apri.addEventListener('click', function () { body.innerHTML = (nota ? nota.innerHTML : '') + (window.__timingHtml || ''); mostra(true); });
   chiudi.addEventListener('click', function () { mostra(false); });
   sheet.addEventListener('click', function (e) { if (e.target === sheet) mostra(false); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheet.classList.contains('open')) mostra(false); });
@@ -2003,6 +2024,39 @@ function formatPiano(testo) {
   return formatMarkdownLibero(testo);
 }
 
+// PIANO-ACC-START
+// Divide il testo markdown del piano in sezioni (ai titoli #, ##, ###) senza perdere nessuna riga: il titolo diventa l'intestazione dell'accordion, il resto resta identico.
+function dividiPianoInSezioni(testo) {
+  const righe = String(testo || '').split('\n');
+  const livello = function (r) { const m = /^(#{1,3})\s+/.exec(r.trim()); return m ? m[1].length : 0; };
+  const conteggio = { 1: 0, 2: 0, 3: 0 };
+  righe.forEach(function (r) { const l = livello(r); if (l) conteggio[l]++; });
+  let L = 0;
+  [1, 2, 3].forEach(function (l) { if (!L && conteggio[l] >= 2) L = l; });
+  if (!L) L = conteggio[2] ? 2 : (conteggio[3] ? 3 : 1);
+  const sezioni = [{ titolo: null, righe: [] }];
+  righe.forEach(function (r) {
+    const l = livello(r);
+    if (l && l <= L) sezioni.push({ titolo: r.trim().replace(/^#+\s*/, '').replace(/\*\*/g, ''), righe: [] });
+    else sezioni[sezioni.length - 1].righe.push(r);
+  });
+  return sezioni.filter(function (x) { return x.titolo !== null || x.righe.some(function (r) { return r.trim(); }); });
+}
+// PIANO-ACC-END
+function costruisciPianoAccordion(testo) {
+  const sezioni = dividiPianoInSezioni(testo);
+  window.__timingHtml = '';
+  let aperto = false;
+  return sezioni.map(function (x) {
+    const corpo = formatMarkdownLibero(x.righe.join('\n'));
+    if (x.titolo === null) return '<div class="piano-intro">' + corpo + '</div>';
+    if (/timing/i.test(x.titolo)) window.__timingHtml = '<div class="sheet-sep"></div><div class="sheet-h">' + x.titolo + '</div>' + corpo;
+    const open = !aperto ? ' open' : '';
+    aperto = true;
+    return '<details class="piano-acc"' + open + '><summary><span class="piano-acc-t">' + x.titolo + '</span><span class="piano-acc-ch">' + CHEVRON_SVG + '</span></summary><div class="piano-acc-b">' + corpo + '</div></details>';
+  }).join('');
+}
+
 function formatMarkdownLibero(testo) {
   if (!testo) return '';
   
@@ -2206,7 +2260,7 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
     div.className = 'card';
     div.style.cssText = 'margin-top:16px;';
     div.innerHTML = `<div class="card-label" style="margin-bottom:10px;">${icona(ICONE.pasto,14)}Piano Nutrizionale da Assessment AI</div>
-      <div style="font-size:13px;color:#3a4055;line-height:1.5;">${formatMarkdownLibero(dietaTesto)}</div>`;
+      <div class="piano-wrap">${costruisciPianoAccordion(dietaTesto)}</div>`;
     const footnote = document.querySelector('#tab-nutrizione .footnote');
     if (footnote) footnote.after(div);
     else document.getElementById('tab-nutrizione').appendChild(div);
@@ -2244,7 +2298,7 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
 
   div.innerHTML = `
     <div class="card">
-      <div class="card-label" style="margin-bottom:10px;">📊 Piano Nutrizionale — Doppia Colonna</div>
+      <div class="card-label" style="margin-bottom:10px;">${icona(ICONE.pasto,14)}Piano Nutrizionale — Doppia Colonna</div>
 
       <!-- Tabella macros -->
       <div style="font-size:10px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Target Giornaliero</div>
@@ -2255,10 +2309,10 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
           <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">${icona(ICONE.riposo,12)}Riposo</div>
         </div>
         ${[
-          ['🔥 Kcal', tdeeAll+'', tdeeRip+''],
-          ['🥩 Proteine', prot+'g', prot+'g'],
-          ['🌾 Carboidrati', carbsAll+'g', carbsRip+'g'],
-          ['🥑 Grassi', grassiAll+'g', grassiRip+'g'],
+          [icona(ICONE.fiamma,14)+'Kcal', tdeeAll+'', tdeeRip+''],
+          [icona(ICONE.proteine,14)+'Proteine', prot+'g', prot+'g'],
+          [icona(ICONE.carbo,14)+'Carboidrati', carbsAll+'g', carbsRip+'g'],
+          [icona(ICONE.grassi,14)+'Grassi', grassiAll+'g', grassiRip+'g'],
         ].map((r,i) => `
           <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:${i%2===0?'#fafaf7':'#fff'};border-top:1px solid #f0ede6;">
             <div style="padding:7px 10px;font-size:12px;color:#5a5248;">${r[0]}</div>
@@ -2269,12 +2323,7 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
 
       <!-- Distribuzione pasti -->
       <div style="font-size:10px;font-weight:700;color:#8a7355;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Distribuzione Pasti</div>
-      <div style="border:1px solid #e0d9c8;border-radius:6px;overflow:hidden;">
-        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:#1a2b3a;padding:7px 10px;">
-          <div style="font-size:10px;font-weight:700;color:#f4f1ea;text-transform:uppercase;letter-spacing:0.06em;">Pasto</div>
-          <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">${icona(ICONE.allenamento,12)}Allen.</div>
-          <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">${icona(ICONE.riposo,12)}Riposo</div>
-        </div>
+      <div class="pasti-list">
         ${pastiDef.map((p, i) => {
           const kcalA = Math.round(tdeeAll * p.pctAll);
           const kcalR = Math.round(tdeeRip * p.pctRip);
@@ -2284,11 +2333,13 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
           const cR = Math.round(carbsRip * p.cPctRip);
           const gA = Math.round(grassiAll * p.gPct);
           const gR = Math.round(grassiRip * p.gPct);
-          return `<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:${i%2===0?'#fafaf7':'#fff'};border-top:1px solid #f0ede6;">
-            <div style="padding:7px 10px;font-size:12px;color:#5a5248;">${icona(ICONE[p.icona],13)}${p.nome}</div>
-            <div style="padding:7px 10px;font-size:11px;color:#1a2b3a;text-align:center;"><b>${kcalA}kcal</b><br><span style="color:#666;">P${pA} C${cA} G${gA}</span></div>
-            <div style="padding:7px 10px;font-size:11px;color:#2d5a3d;text-align:center;"><b>${kcalR}kcal</b><br><span style="color:#666;">P${pR} C${cR} G${gR}</span></div>
-          </div>`;
+          return `<details class="piano-acc"${i === 0 ? ' open' : ''}>
+            <summary><span class="piano-acc-t">${icona(ICONE[p.icona],15)}${p.nome}</span><span class="piano-acc-ch">${CHEVRON_SVG}</span></summary>
+            <div class="piano-acc-b pasto-cols">
+              <div class="pasto-col"><div class="pasto-col-h">${icona(ICONE.allenamento,13)}Allen.</div><b>${kcalA}kcal</b><span>P${pA} C${cA} G${gA}</span></div>
+              <div class="pasto-col"><div class="pasto-col-h">${icona(ICONE.riposo,13)}Riposo</div><b>${kcalR}kcal</b><span>P${pR} C${cR} G${gR}</span></div>
+            </div>
+          </details>`;
         }).join('')}
       </div>
     </div>`;
