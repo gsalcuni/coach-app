@@ -733,6 +733,17 @@ async function binPatchMulti(bin, entries) {
   } catch (e) { console.error('binPatchMulti error:', e); return false; }
 }
 
+// IMAGE-LIB-START
+// Dimensioni ridotte mantenendo le proporzioni: il lato maggiore non supera 'max' (mai ingrandire).
+function dimensioniRidotte(w, h, max) {
+  if (!w || !h) return { w: max, h: max };
+  const lato = Math.max(w, h);
+  if (lato <= max) return { w: w, h: h };
+  const f = max / lato;
+  return { w: Math.round(w * f), h: Math.round(h * f) };
+}
+// IMAGE-LIB-END
+
 // ASSESSMENT-LIB-START
 // Chiamata a Claude con nuovi tentativi (rate limit / sovraccarico) e continuazione se la risposta è tagliata.
 async function callClaudeCompleto(fetchFn, messages, opz) {
@@ -1208,7 +1219,11 @@ let sintomiCount = 0;
 
 async function caricaDiario() {
   const raw = await binGet(BIN_DIARIO);
-  return raw ? JSON.parse(raw) : [];
+  if (!raw) return [];
+  try {
+    const dati = JSON.parse(raw);
+    return Array.isArray(dati) ? dati : []; // un bin nuovo contiene {} e non un elenco
+  } catch (e) { console.warn('Diario non leggibile, uso elenco vuoto'); return []; }
 }
 
 async function salvaDiario(voci) {
@@ -1587,12 +1602,27 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
     console.log('IAM media emotivo:', mediaEmotivo, 'energia:', mediaEnergia);
 
     // 3. Chiama Claude API — 4 chiamate separate
+    // Ricodifica la foto in JPEG (formato sempre corretto per Claude, anche per PNG/WebP/HEIC) e la riduce di dimensione.
     async function fileToBase64(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result.split(',')[1]);
-        reader.readAsDataURL(file);
-      });
+      let bitmap;
+      try { bitmap = await createImageBitmap(file); }
+      catch (e) {
+        bitmap = await new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+          img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Formato foto non supportato: usa JPEG o PNG')); };
+          img.src = url;
+        });
+      }
+      const w = bitmap.width || bitmap.naturalWidth;
+      const h = bitmap.height || bitmap.naturalHeight;
+      const d = dimensioniRidotte(w, h, 1600);
+      const canvas = document.createElement('canvas');
+      canvas.width = d.w; canvas.height = d.h;
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, d.w, d.h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      return dataUrl.split(',')[1];
     }
 
     function parseJSON(text) {
@@ -1625,9 +1655,9 @@ document.getElementById('btn-genera-assessment').addEventListener('click', async
     // CHIAMATA 1 — Somatotipo e postura dalle foto (testo libero)
     document.getElementById('spinner-msg').textContent = 'Analizzo la tua postura...';
     const t1 = await callClaude([{ role: 'user', content: [
-      { type: 'image', source: { type: 'base64', media_type: fotoFiles.frontale.type||'image/jpeg', data: b64front }},
-      { type: 'image', source: { type: 'base64', media_type: fotoFiles.laterale.type||'image/jpeg', data: b64lat }},
-      { type: 'image', source: { type: 'base64', media_type: fotoFiles.posteriore.type||'image/jpeg', data: b64post }},
+      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64front }},
+      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64lat }},
+      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64post }},
       { type: 'text', text: `Analizza queste 3 foto corporee. Dati: ${params}. Rispondi con 4 righe numerate ESATTAMENTE cosi senza virgolette nei valori:
 1. SOMATOTIPO: una frase breve sulla classificazione
 2. POSTURA: una frase breve sulla postura

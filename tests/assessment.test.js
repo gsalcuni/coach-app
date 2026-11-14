@@ -174,3 +174,53 @@ test('il download usa il documento salvato e non rigenera a ogni scarico', () =>
 test("l'import di backup conserva anche l'archivio degli assessment", () => {
   assert.ok(html.includes('imported.assessment_storico = storico.assessment_storico'));
 });
+
+// ---- foto: formato e dimensioni ----
+const im = html.match(/\/\/ IMAGE-LIB-START([\s\S]*?)\/\/ IMAGE-LIB-END/);
+assert.ok(im, 'marcatori IMAGE-LIB non trovati');
+const ctxImg = {};
+vm.createContext(ctxImg);
+vm.runInContext(im[1] + '\nthis.dimensioniRidotte = dimensioniRidotte;', ctxImg);
+const { dimensioniRidotte } = ctxImg;
+
+test('foto grandi: lato maggiore ridotto a 1600, proporzioni mantenute', () => {
+  assert.deepStrictEqual({ ...dimensioniRidotte(4000, 3000, 1600) }, { w: 1600, h: 1200 });
+  assert.deepStrictEqual({ ...dimensioniRidotte(3000, 4000, 1600) }, { w: 1200, h: 1600 });
+});
+
+test('foto già piccole: nessun ingrandimento', () => {
+  assert.deepStrictEqual({ ...dimensioniRidotte(800, 600, 1600) }, { w: 800, h: 600 });
+  assert.deepStrictEqual({ ...dimensioniRidotte(1600, 900, 1600) }, { w: 1600, h: 900 });
+});
+
+test('dimensioni sconosciute: valore sicuro, non zero', () => {
+  const d = dimensioniRidotte(0, 0, 1600);
+  assert.ok(d.w > 0 && d.h > 0);
+});
+
+test('le foto inviate a Claude sono sempre dichiarate JPEG e ricodificate in JPEG', () => {
+  assert.ok(!/media_type:\s*fotoFiles/.test(html), 'il tipo non deve più venire dal nome del file');
+  assert.strictEqual((html.match(/media_type: 'image\/jpeg'/g) || []).length, 3);
+  assert.ok(html.includes("canvas.toDataURL('image/jpeg', 0.85)"));
+});
+
+// ---- diario: sempre un elenco ----
+test('il diario ritorna sempre un elenco, anche con un bin appena creato', () => {
+  const d = html.match(/async function caricaDiario\(\) \{([\s\S]*?)\n\}/);
+  assert.ok(d, 'caricaDiario non trovata');
+  assert.ok(d[1].includes('Array.isArray(dati)'));
+  assert.ok(d[1].includes('catch'));
+});
+
+test('caricaDiario eseguita: bin vuoto, oggetto vuoto, testo non valido ed elenco reale', async () => {
+  const d = html.match(/async function caricaDiario\(\) \{[\s\S]*?\n\}/)[0];
+  const casi = [[null, 0], ['{}', 0], ['{rotto', 0], ['[]', 0], ['[{"data":"2026-11-14"}]', 1]];
+  for (const [raw, attese] of casi) {
+    const c = { BIN_DIARIO: 'diario', console: { warn() {} } };
+    vm.createContext(c);
+    vm.runInContext('async function binGet() { return ' + JSON.stringify(raw) + '; }\n' + d + '\nthis.f = caricaDiario;', c);
+    const r = await c.f();
+    assert.ok(Array.isArray(r) || (r && typeof r.slice === 'function'), 'deve avere slice: ' + raw);
+    assert.strictEqual(r.length, attese, 'caso ' + raw);
+  }
+});
