@@ -37,12 +37,12 @@ Manuali (sulla v2, con una copia dei tuoi dati nel bin di test):
 ## F4 — Input vocale in chat (soluzione A: riconoscimento vocale del browser)
 Automatici: `voice.test.js` (lingua it-IT, avvio/stop, testo aggiunto a quello scritto, parte provvisoria + finale, errori e messaggi, start che fallisce, microfono visibile solo con supporto).
 Manuali (da fare **sull'iPhone**, nei due modi):
-- ☐ Safari normale: il microfono 🎤 è visibile nella chat; tocco → "Sto ascoltando…"; parlo → il testo compare nel campo; tocco di nuovo → si ferma
-- ☐ Il testo detto si aggiunge a quello già scritto e si può correggere prima di inviare
+- ☑ (14/11) Safari su iPhone: il microfono 🎤 è visibile nella chat; tocco → "Sto ascoltando…"; parlo → il testo compare nel campo; tocco di nuovo → si ferma
+- ☑ (14/11) Il testo detto compare nel campo (iPhone Safari e PC)
 - ☐ Con Siri/Dettatura disattivati: messaggio chiaro, nessun blocco della chat
 - ☐ App aggiunta alla schermata Home: se non funziona, appare il messaggio che spiega cosa fare (annotare il comportamento: serve per decidere se passare alla soluzione B)
 - ☐ Permesso microfono negato: messaggio chiaro
-- ☐ Su PC (Chrome): stesso comportamento
+- ☑ (14/11) Su PC Windows: funziona (browser da annotare)
 - ☐ Parlare in italiano frasi con termini tecnici (es. "Lat machine", "epicondilite", "Pallof Press"): annotare gli errori di trascrizione
 Esito da riportare nel backlog: se la A è inaffidabile su iPhone → attivare il task "evoluzione B".
 
