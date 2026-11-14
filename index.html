@@ -197,7 +197,7 @@
 </style>
 </head>
 <body>
-<div id="banner-test" style="position:sticky;top:0;z-index:99999;background:#b45309;color:#fff;font:600 12px/1.4 system-ui,sans-serif;padding:6px 10px;text-align:center;">AMBIENTE DI TEST (v2) — bin allenamento …<span id="banner-bin-all"></span> · diario …<span id="banner-bin-dia"></span></div>
+<div id="banner-test" style="position:sticky;top:0;z-index:99999;background:#b45309;color:#fff;font:600 12px/1.4 system-ui,sans-serif;padding:6px 10px;text-align:center;">AMBIENTE DI TEST (v2) — verifica bin in corso…</div>
 
 <header>
   <div class="eyebrow">Mental &amp; Personal Trainer</div>
@@ -653,57 +653,61 @@ const STORAGE_KEY = 'coach_allenamento_storico';
 /* =========================================================
    JSONBIN STORAGE — CORS ok da qualsiasi URL
 ========================================================= */
-const JSONBIN_KEY = '$2a$10$KvQ3Coeg9xRrGizCcxKLe.EAAbCm0ZjNE.AFx3ReNGHQqR734ls8a';
-const BIN_ALLENAMENTO = '6af8813cac6210605a878724';
-const BIN_DIARIO = '6af8819aac6210605a8787f4';
-const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+// Accesso ai dati tramite la funzione Netlify "jsonbin-proxy": la chiave JSONBin non è più nel browser.
+// BIN_* sono alias ('allenamento', 'diario'); gli ID reali sono variabili d'ambiente su Netlify.
+const BIN_ALLENAMENTO = 'allenamento';
+const BIN_DIARIO = 'diario';
+const JSONBIN_PROXY = '/.netlify/functions/jsonbin-proxy';
 
-async function binGet(binId) {
+async function proxyCall(payload) {
+  const res = await fetch(JSONBIN_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  return { status: res.status, data };
+}
+
+async function binGet(bin) {
   try {
-    const res = await fetch(JSONBIN_BASE + '/' + binId + '/latest', {
-      headers: { 'X-Master-Key': JSONBIN_KEY }
-    });
-    const data = await res.json();
-    console.log('binGet response:', res.status, data);
-    const p = data.record ? data.record.payload : null;
+    const r = await proxyCall({ op: 'get', bin });
+    console.log('binGet', bin, r.status);
+    if (r.status !== 200 || !r.data) return null;
+    const p = r.data.payload;
     if (p === null || p === undefined) return null;
     return typeof p === 'string' ? p : JSON.stringify(p);
   } catch (e) { console.error('binGet error:', e); return null; }
 }
 
-// v2: ambiente di test. Blocca ogni scrittura sui bin di produzione.
-const AMBIENTE_TEST = true;
-const BIN_PRODUZIONE = ['6a4599beda38895dfe1ef074', '6a4599e2f5f4af5e29508282'];
-(function () {
-  const a = document.getElementById('banner-bin-all');
-  const d = document.getElementById('banner-bin-dia');
-  if (a) a.textContent = BIN_ALLENAMENTO.slice(-6);
-  if (d) d.textContent = BIN_DIARIO.slice(-6);
-  if (AMBIENTE_TEST && (BIN_PRODUZIONE.includes(BIN_ALLENAMENTO) || BIN_PRODUZIONE.includes(BIN_DIARIO))) {
-    const b = document.getElementById('banner-test');
-    if (b) { b.style.background = '#b91c1c'; b.textContent = 'ATTENZIONE: la v2 punta ai bin di PRODUZIONE — salvataggi bloccati'; }
-  }
-})();
-
-async function binSet(binId, value) {
-  if (AMBIENTE_TEST && BIN_PRODUZIONE.includes(binId)) {
-    console.error('binSet bloccato: bin di produzione in ambiente di test', binId);
-    return false;
-  }
+async function binSet(bin, value) {
   try {
-    const res = await fetch(JSONBIN_BASE + '/' + binId, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_KEY
-      },
-      body: JSON.stringify({ payload: value })
-    });
-    const data = await res.json();
-    console.log('binSet response:', res.status, data);
-    return !!data.metadata;
+    const r = await proxyCall({ op: 'set', bin, value });
+    console.log('binSet', bin, r.status);
+    if (r.status !== 200) console.error('binSet errore:', r.data);
+    return r.status === 200 && !!(r.data && r.data.ok);
   } catch (e) { console.error('binSet error:', e); return false; }
 }
+
+// Banner ambiente di test: mostra le ultime 6 cifre dei bin in uso (restituite dalla funzione).
+(async function () {
+  const b = document.getElementById('banner-test');
+  if (!b) return;
+  try {
+    const r = await proxyCall({ op: 'info' });
+    if (r.status !== 200 || !r.data) { b.style.background = '#b91c1c'; b.textContent = 'ATTENZIONE: funzione dati non raggiungibile — salvataggi non disponibili'; return; }
+    const d = r.data;
+    if (d.allenamento_produzione || d.diario_produzione) {
+      b.style.background = '#b91c1c';
+      b.textContent = d.scrittura_produzione_consentita
+        ? 'ATTENZIONE: questo ambiente scrive sui bin di PRODUZIONE'
+        : 'ATTENZIONE: bin di PRODUZIONE collegati — salvataggi bloccati';
+      return;
+    }
+    b.textContent = 'AMBIENTE DI TEST (v2) — bin allenamento …' + d.allenamento + ' · diario …' + d.diario;
+  } catch (e) { b.style.background = '#b91c1c'; b.textContent = 'ATTENZIONE: funzione dati non raggiungibile'; }
+})();
 
 async function caricaStorico() {
   if (salvataggioMsg) salvataggioMsg.textContent = '⏳ Caricamento...';
