@@ -90,6 +90,31 @@ exports.handler = async (event) => {
       if (r.status !== 200) return reply(r.status, { error: 'JSONBin PUT fallito', detail: r.body });
       return reply(200, { ok: true });
     }
+    if (req.op === 'patch') {
+      // Aggiorna UNA sola chiave dell'oggetto salvato: legge il contenuto più recente, cambia la chiave, riscrive.
+      // Evita che una copia vecchia in memoria nel browser sovrascriva altre chiavi (es. assessment).
+      const key = req.key;
+      if (typeof key !== 'string' || !key || key.length > 200 || ['__proto__', 'constructor', 'prototype'].includes(key)) {
+        return reply(400, { error: 'key non valida' });
+      }
+      if (BIN_PRODUZIONE.includes(binId) && process.env.ALLOW_PROD_BINS !== '1') {
+        return reply(403, { error: 'Scrittura su bin di produzione bloccata in questo ambiente' });
+      }
+      const g = await jsonbinRequest('GET', binId);
+      if (g.status !== 200) return reply(g.status, { error: 'JSONBin GET fallito', detail: g.body });
+      let current = g.body && g.body.record ? g.body.record.payload : null;
+      if (typeof current === 'string') {
+        try { current = JSON.parse(current); } catch (e) { return reply(409, { error: 'Contenuto del bin non leggibile: scrittura annullata' }); }
+      }
+      if (current === null || current === undefined) current = {};
+      if (typeof current !== 'object' || Array.isArray(current)) return reply(409, { error: 'Il bin non contiene un oggetto: scrittura annullata' });
+      current[key] = req.value;
+      const serialized = JSON.stringify(current);
+      if (serialized.length > MAX_VALUE_CHARS) return reply(413, { error: 'contenuto troppo grande' });
+      const w = await jsonbinRequest('PUT', binId, { payload: serialized });
+      if (w.status !== 200) return reply(w.status, { error: 'JSONBin PUT fallito', detail: w.body });
+      return reply(200, { ok: true });
+    }
     return reply(400, { error: 'Operazione non valida' });
   } catch (e) {
     console.error('jsonbin-proxy error:', e.message);
