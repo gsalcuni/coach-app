@@ -97,3 +97,11 @@ Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di 
 - [ ] Dopo un assessment: il piano nutrizionale è diviso in accordion per titolo; il primo è aperto; i testi coincidono con il documento scaricato.
 - [ ] Se il piano contiene una sezione "Timing", il suo testo compare anche nel pannello (i).
 - [ ] Formato a doppia colonna: ogni pasto è un accordion con kcal e P/C/G per Allen. e Riposo.
+
+### F6c — Piano nutrizionale in sotto-sezioni con switch giorno
+- [ ] Dopo un assessment: "Macro Target e Timing Nutrienti" mostra i macro di Allenamento e Riposo (come nel piano) e la tabella Timing; il giorno selezionato in alto è evidenziato.
+- [ ] "Distribuzione Pasti": Colazione, Metà Mattina, Pranzo, Metà Pomeriggio, Cena; cambiando Giorno Allenamento/Riposo cambia il contenuto di ogni pasto e i pasti aperti restano aperti.
+- [ ] "Supplementazione" e "Note" (titolo originale del piano) mostrano il testo del piano.
+- [ ] Nessuna sezione "Altro" inattesa; se compare, annotare il titolo e segnalarlo.
+- [ ] Piano con formato non riconosciuto: si vede il raggruppamento a titoli (ripiego), nessun testo perso.
+- [ ] Il testo del piano nella tab coincide con il file Piano Nutrizionale scaricato.

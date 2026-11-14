@@ -316,6 +316,22 @@
   .sheet-sep { height:1px; background:var(--line); margin:16px 0 12px; }
   .sheet-h { font-weight:700; margin-bottom:6px; }
   @media (prefers-reduced-motion: reduce) { .piano-acc-ch { transition:none; } }
+
+  .macro-note { font-size:12px; color:var(--muted); font-weight:600; margin:2px 0 8px; }
+  .macro-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .macro-card { background:var(--bg); border:1px solid var(--line); border-radius:16px; padding:10px 12px; display:flex; flex-direction:column; gap:2px; font-size:13px; font-variant-numeric:tabular-nums; }
+  .macro-card.sel { background:var(--surface); border-color:var(--ink); box-shadow:var(--shadow); }
+  .macro-card-h { font-size:12px; color:var(--muted); font-weight:600; }
+  .macro-card span { font-size:12px; color:var(--muted); }
+  .macro-extra { margin-top:10px; font-size:13px; }
+  .piano-giorno { font-size:12px; font-weight:600; color:var(--muted); margin:10px 0 8px; }
+  .piano-vuoto { font-size:12.5px; color:var(--muted); padding:6px 0; }
+  .pasto-titolo { font-size:12px; color:var(--muted); font-weight:600; margin:8px 0 4px; }
+  .pasto-chip { margin-left:8px; font-size:11px; font-weight:600; color:var(--muted); background:var(--bg); border-radius:999px; padding:2px 8px; font-variant-numeric:tabular-nums; }
+  .piano-acc.sub { border-radius:14px; margin-bottom:8px; background:var(--bg); }
+  .piano-acc.sub > summary { min-height:48px; font-size:13.5px; }
+  .piano-acc.sub .piano-acc-b { background:var(--surface); }
+  .piano-acc-b { padding-top:8px; }
 </style>
 </head>
 <body>
@@ -849,6 +865,8 @@ function storicoEsercizio(storicoObj, nome, giorno) {
 
 let tipoGiorno = 'allenamento';
 let categoriaAperta = null;
+let pianoParsato = null;
+const pianoAperti = new Set(['macro', 'pasti']);
 let giornoCorrente = 'lunedi';
 let esercizioAperto = null;
 let storico = {};
@@ -1108,6 +1126,7 @@ function renderNutrizione() {
   btnAllenamento.setAttribute('aria-pressed', String(tipoGiorno === 'allenamento'));
   btnRiposo.setAttribute('aria-pressed', String(tipoGiorno === 'riposo'));
 
+  if (pianoParsato) renderPianoNutrizione();
   macroAccordionsEl.innerHTML = '';
   Object.keys(CATEGORIE).forEach((cat) => {
     macroAccordionsEl.appendChild(creaAccordion(cat, grammi[cat], pct[cat]));
@@ -2024,6 +2043,117 @@ function formatPiano(testo) {
   return formatMarkdownLibero(testo);
 }
 
+// PIANO-PARSE-START
+// Parser tollerante del piano nutrizionale generato dall'AI. Non riscrive né calcola nulla: assegna ogni riga a una sezione.
+// Le righe che non riconosce finiscono in "altro", così non se ne perde nessuna.
+const PASTI_ORDINE = [['colazione', 'Colazione'], ['metamattina', 'Metà Mattina'], ['pranzo', 'Pranzo'], ['metapomeriggio', 'Metà Pomeriggio'], ['cena', 'Cena']];
+function normTesto(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[*#_`]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function classificaTitolo(n) {
+  if (/macro/.test(n) && !/^giorno/.test(n)) return 'macro';
+  if (/timing/.test(n)) return 'timing';
+  if (/supplement|integra/.test(n)) return 'supp';
+  if (/\bnot[ae]\b|\bnote\b/.test(n)) return 'note';
+  if (/ripos/.test(n)) return 'riposo';
+  if (/allenament/.test(n)) return 'allenamento';
+  return 'altro';
+}
+function riconosciPasto(riga) {
+  const t = String(riga).trim();
+  if (/^[-•]\s/.test(t) || /^\*\s/.test(t) || t.startsWith('|')) return null;
+  const n = normTesto(t.replace(/^#+\s*/, ''));
+  const tabella = [
+    ['colazione', /^colazione\b/],
+    ['metamattina', /^(meta ?mattina|spuntino (del )?(mattino|mattina)|mattina)\b/],
+    ['pranzo', /^pranzo\b/],
+    ['metapomeriggio', /^(meta ?pomeriggio|merenda|spuntino (del )?pomeriggio|pomeriggio)\b/],
+    ['cena', /^cena\b/]
+  ];
+  const sembraTitolo = t.startsWith('**') || t.startsWith('#') || /kcal|:\s*$/i.test(t) || n.split(' ').length <= 3;
+  if (!sembraTitolo) return null;
+  for (let i = 0; i < tabella.length; i++) if (tabella[i][1].test(n)) return tabella[i][0];
+  return null;
+}
+function estraiMacro(testo) {
+  const t = String(testo || '');
+  const m = function (re) { const x = re.exec(t); return x ? x[1] : null; };
+  const out = {
+    kcal: m(/(\d{3,5})\s*kcal/i),
+    P: m(/\bP(?:roteine)?\s*[:=]?\s*(\d{2,3})\s*g/i),
+    C: m(/\bC(?:arbo\w*)?\s*[:=]?\s*(\d{2,3})\s*g/i),
+    G: m(/\b(?:G|Grassi)\s*[:=]?\s*(\d{2,3})\s*g/i),
+    raw: t.trim()
+  };
+  return out;
+}
+function parsePianoNutrizionale(testo) {
+  const righe = String(testo || '').split('\n');
+  const out = { titolo: null, preambolo: [], macro: { allenamento: null, riposo: null, generico: [] }, timing: null, giorni: { allenamento: null, riposo: null }, supp: null, note: null, altro: [], registro: [], riuscito: false };
+  let sez = null;
+  const reg = function (t) { out.registro.push(t); };
+  const dest = function () {
+    if (!sez) return out.preambolo;
+    if (sez.tipo === 'allenamento' || sez.tipo === 'riposo') return sez.cur ? sez.cur.righe : sez.intro;
+    return sez.righe;
+  };
+  const chiudi = function () {
+    if (!sez) return;
+    const t = sez.tipo;
+    if (t === 'timing' && !out.timing) out.timing = sez;
+    else if (t === 'supp' && !out.supp) out.supp = sez;
+    else if (t === 'note' && !out.note) out.note = sez;
+    else if ((t === 'allenamento' || t === 'riposo') && !out.giorni[t]) out.giorni[t] = sez;
+    else if (t === 'macro') {
+      const n = normTesto(sez.titolo);
+      if (/ripos/.test(n) && !out.macro.riposo) out.macro.riposo = sez;
+      else if (/allenament/.test(n) && !out.macro.allenamento) out.macro.allenamento = sez;
+      else out.macro.generico.push(sez);
+    } else out.altro.push(sez);
+    sez = null;
+  };
+  righe.forEach(function (r) {
+    const t = r.trim();
+    if (/^-{3,}$/.test(t)) return;
+    if (!t) { const d = dest(); if (d.length) d.push(''); return; }
+    const mh = /^(#{1,3})\s+(.*)$/.exec(t);
+    const giorno = sez && (sez.tipo === 'allenamento' || sez.tipo === 'riposo');
+    if (giorno) {
+      const chiave = riconosciPasto(t);
+      const boldNoto = /^\*\*[^*]+\*\*(\s*[—–-]\s*\d+\s*kcal)?:?$/.test(t);
+      if (chiave || (boldNoto && !mh) || (mh && chiave)) {
+        const titolo = t.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim();
+        let key = chiave || 'extra';
+        if (key !== 'extra' && sez.pasti[key]) key = 'extra';
+        const blocco = { key: key, titolo: titolo, righe: [] };
+        if (key === 'extra') sez.extra.push(blocco); else sez.pasti[key] = blocco;
+        sez.cur = blocco; reg(t); return;
+      }
+    }
+    if (mh) {
+      const liv = mh[1].length;
+      const txt = mh[2].replace(/\*\*/g, '').trim();
+      const tipo = classificaTitolo(normTesto(txt));
+      if (tipo === 'altro' && sez && liv > sez.livello) { dest().push(r); reg(t); return; }
+      if (!sez && out.titolo === null && liv === 1 && tipo === 'altro' && !out.altro.length && !out.timing && !out.supp && !out.note && !out.giorni.allenamento && !out.giorni.riposo) { out.titolo = txt; reg(t); return; }
+      chiudi();
+      sez = { tipo: tipo, titolo: txt, livello: liv, righe: [], intro: [], pasti: {}, extra: [], cur: null };
+      reg(t); return;
+    }
+    dest().push(r); reg(t);
+  });
+  chiudi();
+
+  ['allenamento', 'riposo'].forEach(function (d) {
+    const g = out.giorni[d], m = out.macro[d];
+    const sorgente = [g ? g.titolo : '', m ? m.titolo : '', m ? m.righe.join(' ') : ''].join(' ');
+    out.macro[d + 'Valori'] = (g || m) ? estraiMacro(sorgente) : null;
+  });
+  const haPasti = ['allenamento', 'riposo'].some(function (d) { return out.giorni[d] && Object.keys(out.giorni[d].pasti).length > 0; });
+  out.riuscito = haPasti;
+  return out;
+}
+// PIANO-PARSE-END
 // PIANO-ACC-START
 // Divide il testo markdown del piano in sezioni (ai titoli #, ##, ###) senza perdere nessuna riga: il titolo diventa l'intestazione dell'accordion, il resto resta identico.
 function dividiPianoInSezioni(testo) {
@@ -2055,6 +2185,70 @@ function costruisciPianoAccordion(testo) {
     aperto = true;
     return '<details class="piano-acc"' + open + '><summary><span class="piano-acc-t">' + x.titolo + '</span><span class="piano-acc-ch">' + CHEVRON_SVG + '</span></summary><div class="piano-acc-b">' + corpo + '</div></details>';
   }).join('');
+}
+
+
+// Rendering del piano per giorno: segue lo switch Allenamento/Riposo (tipoGiorno)
+function escHtml(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function pianoDet(chiave, titoloHtml, corpoHtml, extraClasse) {
+  return '<details class="piano-acc' + (extraClasse ? ' ' + extraClasse : '') + '" data-k="' + escHtml(chiave) + '"' + (pianoAperti.has(chiave) ? ' open' : '') +
+    '><summary><span class="piano-acc-t">' + titoloHtml + '</span><span class="piano-acc-ch">' + CHEVRON_SVG + '</span></summary><div class="piano-acc-b">' + corpoHtml + '</div></details>';
+}
+function renderPianoNutrizione() {
+  const wrap = document.getElementById('piano-wrap');
+  const P = pianoParsato;
+  if (!wrap || !P) return;
+  const gSel = tipoGiorno;
+  const etichette = { allenamento: 'Giorno Allenamento', riposo: 'Giorno Riposo' };
+  const md = function (righe) { return formatMarkdownLibero(righe.join('\n')); };
+
+  // Macro target + timing
+  let macroHtml = '<div class="macro-note">Target del piano AI</div><div class="macro-cards">';
+  ['allenamento', 'riposo'].forEach(function (d) {
+    const v = P.macro[d + 'Valori'];
+    if (!v) return;
+    const trovati = [['P', v.P], ['C', v.C], ['G', v.G]].filter(function (x) { return x[1]; }).map(function (x) { return x[0] + ' ' + x[1] + 'g'; }).join(' · ');
+    const corpo = (v.kcal || trovati) ? ((v.kcal ? '<b>' + v.kcal + ' kcal</b>' : '') + (trovati ? '<span>' + trovati + '</span>' : '')) : '<span>' + escHtml(v.raw) + '</span>';
+    macroHtml += '<div class="macro-card' + (d === gSel ? ' sel' : '') + '"><div class="macro-card-h">' + icona(d === 'allenamento' ? ICONE.allenamento : ICONE.riposo, 13) + etichette[d] + '</div>' + corpo + '</div>';
+  });
+  macroHtml += '</div>';
+  P.macro.generico.forEach(function (m) { macroHtml += '<div class="macro-extra">' + md([m.titolo].concat(m.righe)) + '</div>'; });
+  ['allenamento', 'riposo'].forEach(function (d) { const m = P.macro[d]; if (m && m.righe.some(function (r) { return r.trim(); })) macroHtml += '<div class="macro-extra">' + md(m.righe) + '</div>'; });
+  if (P.preambolo.some(function (r) { return r.trim(); })) macroHtml += '<div class="macro-extra">' + md(P.preambolo) + '</div>';
+  let timingHtml = '';
+  if (P.timing) { timingHtml = md(P.timing.righe); window.__timingHtml = '<div class="sheet-sep"></div><div class="sheet-h">' + escHtml(P.timing.titolo) + '</div>' + timingHtml; }
+  if (timingHtml) macroHtml += '<div class="sheet-sep"></div><div class="sheet-h">Timing Nutrienti</div>' + timingHtml;
+
+  // Distribuzione pasti del giorno selezionato
+  const g = P.giorni[gSel];
+  let pastiHtml = '<div class="piano-giorno">' + icona(gSel === 'allenamento' ? ICONE.allenamento : ICONE.riposo, 13) + etichette[gSel] + '</div>';
+  if (!g) {
+    pastiHtml += '<div class="piano-vuoto">Il piano non contiene indicazioni per questo giorno.</div>';
+  } else {
+    if (g.intro.some(function (r) { return r.trim(); })) pastiHtml += '<div class="piano-intro">' + md(g.intro) + '</div>';
+    PASTI_ORDINE.forEach(function (pp) {
+      const b = g.pasti[pp[0]];
+      const kc = b && /(\d{2,4})\s*kcal/i.exec(b.titolo);
+      const chip = kc ? '<span class="pasto-chip">' + kc[1] + ' kcal</span>' : '';
+      const corpo = b ? ('<div class="pasto-titolo">' + escHtml(b.titolo) + '</div>' + md(b.righe)) : '<div class="piano-vuoto">Il piano non contiene questo pasto per questo giorno.</div>';
+      pastiHtml += pianoDet('pasto:' + pp[0], escHtml(pp[1]) + chip, corpo, 'sub');
+    });
+    g.extra.forEach(function (b, i) {
+      pastiHtml += pianoDet('extra:' + gSel + ':' + i, escHtml(b.titolo), md(b.righe), 'sub');
+    });
+  }
+
+  let html = '';
+  if (P.titolo) html += '<div class="piano-intro">' + escHtml(P.titolo) + '</div>';
+  html += pianoDet('macro', 'Macro Target e Timing Nutrienti', macroHtml);
+  html += pianoDet('pasti', 'Distribuzione Pasti', pastiHtml);
+  if (P.supp) html += pianoDet('supp', 'Supplementazione', md(P.supp.righe));
+  if (P.note) html += pianoDet('note', escHtml(P.note.titolo), md(P.note.righe));
+  P.altro.forEach(function (a, i) { html += pianoDet('altro:' + i, escHtml(a.titolo), md(a.righe)); });
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('details[data-k]').forEach(function (d) {
+    d.addEventListener('toggle', function () { if (d.open) pianoAperti.add(d.dataset.k); else pianoAperti.delete(d.dataset.k); });
+  });
 }
 
 function formatMarkdownLibero(testo) {
@@ -2260,10 +2454,14 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
     div.className = 'card';
     div.style.cssText = 'margin-top:16px;';
     div.innerHTML = `<div class="card-label" style="margin-bottom:10px;">${icona(ICONE.pasto,14)}Piano Nutrizionale da Assessment AI</div>
-      <div class="piano-wrap">${costruisciPianoAccordion(dietaTesto)}</div>`;
+      <div class="piano-wrap" id="piano-wrap"></div>`;
     const footnote = document.querySelector('#tab-nutrizione .footnote');
     if (footnote) footnote.after(div);
     else document.getElementById('tab-nutrizione').appendChild(div);
+    pianoParsato = null;
+    try { const parsato = parsePianoNutrizionale(dietaTesto); if (parsato.riuscito) pianoParsato = parsato; } catch (e) { console.error('Parser piano:', e); }
+    if (pianoParsato) renderPianoNutrizione();
+    else document.getElementById('piano-wrap').innerHTML = costruisciPianoAccordion(dietaTesto);
     setTimeout(() => { if (typeof renderNutrizione === 'function') renderNutrizione(); }, 150);
     return;
   }

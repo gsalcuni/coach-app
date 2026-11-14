@@ -1,0 +1,31 @@
+Macro target allenamento: 2800 kcal P 170g C 300g G 80g
+Macro target riposo: 2400 kcal P 175g C 230g G 75g
+
+## Timing nutrienti
+Testo timing
+
+## Giorno Allenamento
+### Colazione
+- Avena
+### Spuntino mattina
+- Frutta
+### Pranzo
+- Riso
+**Spuntino serale — 200 kcal**
+- Yogurt
+### Cena
+- Pollo
+
+## Giorno di Riposo
+Nota introduttiva del giorno
+### Cena
+- Pesce
+
+## Integrazione
+- Whey
+
+## NOTE pratiche
+- Bere
+
+## Varie
+- Qualcosa di imprevisto
