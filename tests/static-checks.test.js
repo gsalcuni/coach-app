@@ -38,3 +38,13 @@ test('gli script inline hanno sintassi valida', () => {
   const code = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
   assert.doesNotThrow(() => new Function(code));
 });
+
+test('la scheda di default ha il core completo in tutte e tre le sessioni', () => {
+  const m = html.match(/const CORE_DEFAULT = (\[[^\]]*\]);\s*const SCHEDA = \{([\s\S]*?)\n\};/);
+  assert.ok(m, 'CORE_DEFAULT / SCHEDA non trovati');
+  const core = new Function('return ' + m[1])();
+  assert.deepStrictEqual([...core], ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX']);
+  for (const giorno of ['lunedi', 'mercoledi', 'venerdi']) {
+    assert.ok(new RegExp(giorno + ":\\s*\\{[^}]*\\.\\.\\.CORE_DEFAULT").test(m[2]), 'core mancante in ' + giorno);
+  }
+});

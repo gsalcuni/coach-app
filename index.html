@@ -636,10 +636,12 @@ const CATEGORIE = {
   grassi: { colore: '#6b8e7a', label: 'Grassi', key: 'g' },
 };
 
+// Core in ogni sessione (come nel piano generato dall'assessment).
+const CORE_DEFAULT = ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
 const SCHEDA = {
-  lunedi: { titolo: 'Push', esercizi: ['Bird Dog', 'Distensioni panca piana', 'Panca inclinata manubri', 'Croci ai cavi', 'Alzate laterali ai cavi', 'Dip alle parallele', 'Push down ai cavi'] },
-  mercoledi: { titolo: 'Pull', esercizi: ['Pallof Press', 'Lat machine', 'Pulley', 'Rematore chest-supported', 'Pullover', 'Face Pull', 'Curl manubri', 'Hammer Curl'] },
-  venerdi: { titolo: 'Total Body', esercizi: ['Dead Bug', 'Leg Press', 'Leg Extension', 'Leg Curl', 'Hip Thrust', 'Calf Raise'] },
+  lunedi: { titolo: 'Push', esercizi: [...CORE_DEFAULT, 'Distensioni panca piana', 'Panca inclinata manubri', 'Croci ai cavi', 'Alzate laterali ai cavi', 'Dip alle parallele', 'Push down ai cavi'] },
+  mercoledi: { titolo: 'Pull', esercizi: [...CORE_DEFAULT, 'Lat machine', 'Pulley', 'Rematore chest-supported', 'Pullover', 'Face Pull', 'Curl manubri', 'Hammer Curl'] },
+  venerdi: { titolo: 'Total Body', esercizi: [...CORE_DEFAULT, 'Leg Press', 'Leg Extension', 'Leg Curl', 'Hip Thrust', 'Calf Raise'] },
 };
 
 // LOG-KEYS-START
