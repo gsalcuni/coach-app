@@ -105,3 +105,11 @@ Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di 
 - [ ] Nessuna sezione "Altro" inattesa; se compare, annotare il titolo e segnalarlo.
 - [ ] Piano con formato non riconosciuto: si vede il raggruppamento a titoli (ripiego), nessun testo perso.
 - [ ] Il testo del piano nella tab coincide con il file Piano Nutrizionale scaricato.
+
+## F7 — Restyling tab Allenamento (Step 2)
+- [ ] Esporta/Importa backup non sono più in Allenamento: sono in fondo al Profilo, con lo stesso comportamento (file `backup_allenamento_AAAA-MM-GG.json`).
+- [ ] Ogni esercizio è una card; se ha dati, mostra il badge con l'ultimo carico (kg, oppure serie x rip se senza peso) e la riga "Ultima: …" identica a prima.
+- [ ] "+ Registra" apre l'esercizio e mette il cursore sul campo serie; "Salva" salva come prima (stessa chiave per sessione, es. `Lat machine_PULL`).
+- [ ] Clic sul nome apre/chiude l'esercizio; storico ed eliminazione voce (✕) funzionano.
+- [ ] Push / Pull / Total Body: i core (Dead Bug, Bird Dog, Pallof Press, Plank TRX) sono presenti in tutte e tre.
+- [ ] Dopo un assessment la scheda si aggiorna e le card restano nello stesso stile.

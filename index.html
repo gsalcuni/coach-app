@@ -224,8 +224,9 @@
   .nav-btn { padding:8px 0 7px; margin-top:0; border:none; border-radius:22px; color:var(--muted); min-height:52px; transition:background .18s, color .18s; }
   .nav-btn.active { color:#fff; background:var(--ink); border:none; }
   .nav-icon { display:flex; justify-content:center; line-height:0; }
-  .nav-label { font-size:11px; margin-top:3px; }
-  .chat-btn { bottom:96px; }
+  .nav-label { font-size:10.5px; margin-top:3px; white-space:nowrap; }
+  .nav-btn { padding-left:2px; padding-right:2px; }
+  .chat-btn { bottom:96px; color:#fff; display:flex; align-items:center; justify-content:center; }
 
   #tab-nutrizione .intro { margin:6px 0 18px; color:var(--muted); font-size:13.5px; line-height:1.55; max-width:62ch; flex:1; }
   .nut-bar { display:flex; align-items:flex-start; gap:12px; }
@@ -332,6 +333,30 @@
   .piano-acc.sub > summary { min-height:48px; font-size:13.5px; }
   .piano-acc.sub .piano-acc-b { background:var(--surface); }
   .piano-acc-b { padding-top:8px; }
+
+  /* ===== Restyling v2: tab Allenamento ===== */
+  .giorni-row { gap:4px; padding:4px; background:var(--track); border-radius:999px; margin-bottom:14px; }
+  .giorno-btn { flex:1 1 0; min-height:44px; padding:0 12px; border:none; border-radius:999px; background:transparent; color:var(--muted); font-size:13.5px; transition:background .18s, color .18s; }
+  .giorno-btn.active { background:var(--surface); color:var(--ink); border:none; box-shadow:0 2px 10px -2px rgba(26,43,60,0.14); }
+  .salvataggio-msg { color:var(--sage); }
+  .esercizio-card { background:var(--surface); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); padding:16px; margin-bottom:12px; }
+  .es-riga { display:flex; align-items:center; gap:10px; }
+  .es-head { flex:1; width:auto; min-width:0; gap:8px; min-height:48px; }
+  .es-testo { min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:2px; }
+  .es-nome { font-size:15px; line-height:1.3; }
+  .es-ultima, .es-nessuno { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; }
+  .es-badge { margin-top:8px; display:inline-block; background:var(--ink); color:#fff; font-size:13px; font-weight:700; border-radius:999px; padding:4px 12px; font-variant-numeric:tabular-nums; }
+  .esercizio-card .chevron { display:inline-flex; color:var(--muted); font-size:0; flex:0 0 auto; }
+  .es-registra { flex:0 0 auto; min-height:44px; padding:0 14px; border:none; border-radius:999px; background:var(--ink); color:#fff; font:inherit; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .es-body { border-top:1px solid var(--line); margin-top:14px; padding-top:14px; }
+  .es-save-btn { min-height:44px; padding:0 18px; border-radius:999px; background:var(--ink); font-size:13.5px; }
+  .storico-label { color:var(--muted); font-size:12px; text-transform:none; letter-spacing:0; }
+  .storico-row { font-variant-numeric:tabular-nums; }
+  .backup-card { background:var(--surface); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); padding:18px; margin:18px 0 8px; }
+  .backup-title { font-size:13px; font-weight:700; margin-bottom:12px; }
+  .backup-row { margin-bottom:0; }
+  .backup-btn { min-height:48px; border-radius:16px; border:1px solid var(--line); background:var(--bg); font-size:13px; }
+  @media (prefers-reduced-motion: reduce) { .giorno-btn { transition:none; } }
 </style>
 </head>
 <body>
@@ -397,12 +422,6 @@
 
   <div class="tab-content" id="tab-allenamento">
     <p class="intro">Registra i carichi di ogni esercizio. I dati restano salvati su questo telefono/browser.</p>
-
-    <div class="backup-row">
-      <button class="backup-btn" id="export-btn">⬇ Esporta backup</button>
-      <button class="backup-btn" id="import-btn">⬆ Importa backup</button>
-      <input type="file" id="import-input" accept=".json">
-    </div>
 
     <div class="giorni-row" id="giorni-row"></div>
     <div class="salvataggio-msg" id="salvataggio-msg"></div>
@@ -686,6 +705,15 @@
       </div>
     </div>
 
+    <div class="backup-card">
+      <div class="backup-title">Backup dati allenamento</div>
+      <div class="backup-row">
+        <button class="backup-btn" id="export-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px;"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Esporta backup</button>
+        <button class="backup-btn" id="import-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px;"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/></svg>Importa backup</button>
+        <input type="file" id="import-input" accept=".json">
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -697,7 +725,7 @@
 </div>
 
 <!-- CHAT BUTTON -->
-<button class="chat-btn" id="chat-open-btn" title="Parla con il tuo Coach">💬</button>
+<button class="chat-btn" id="chat-open-btn" title="Parla con il tuo Coach" aria-label="Parla con il tuo Coach"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></button>
 
 <!-- CHAT DRAWER -->
 <div class="chat-drawer" id="chat-drawer">
@@ -1284,22 +1312,51 @@ function creaEsercizioCard(nome) {
   const isOpen = esercizioAperto === nome;
 
   const card = document.createElement('div');
-  card.className = 'esercizio-card';
+  card.className = 'esercizio-card' + (isOpen ? ' aperta' : '');
 
   const head = document.createElement('button');
   head.className = 'es-head';
+  // Badge dell'ultimo carico registrato: usa solo i dati reali dell'ultima voce
+  let badge = '';
+  if (ultima) {
+    const pesoU = ultima.peso && !isNaN(ultima.peso) && ultima.peso > 0 ? ultima.peso : null;
+    const serieU = ultima.serie && !isNaN(ultima.serie) ? ultima.serie : null;
+    const ripU = ultima.ripetizioni && !isNaN(ultima.ripetizioni) ? ultima.ripetizioni : null;
+    if (pesoU) badge = '<span class="es-badge">' + pesoU + ' kg</span>';
+    else if (serieU || ripU) badge = '<span class="es-badge">' + (serieU ? serieU + 'x' : '') + (ripU ? ripU + ' rip' : '') + '</span>';
+  }
   head.innerHTML =
-    '<div>' +
+    '<div class="es-testo">' +
       '<div class="es-nome">' + nome + '</div>' +
       (ultima
         ? '<div class="es-ultima">Ultima: ' + formatData(ultima.data) + (ultima.serie && !isNaN(ultima.serie) ? ' · ' + ultima.serie + 'x' : '') + (ultima.ripetizioni && !isNaN(ultima.ripetizioni) ? ultima.ripetizioni + ' rip' : '') + (ultima.peso && !isNaN(ultima.peso) && ultima.peso > 0 ? ' · ' + ultima.peso + 'kg' : '') + (ultima.note ? ' · ' + ultima.note.substring(0,30) : '') + '</div>'
         : '<div class="es-nessuno">Nessun dato registrato</div>') +
+      badge +
     '</div>' +
-    '<span class="chevron ' + (isOpen ? 'open' : '') + '">\u203A</span>';
+    '<span class="chevron ' + (isOpen ? 'open' : '') + '">' + CHEVRON_SVG + '</span>';
+  head.setAttribute('aria-expanded', String(isOpen));
   head.addEventListener('click', () => {
     esercizioAperto = isOpen ? null : nome;
     renderEsercizi();
   });
+
+  // Tasto rapido: apre l'esercizio e porta il cursore sul primo campo
+  const registra = document.createElement('button');
+  registra.type = 'button';
+  registra.className = 'es-registra';
+  registra.textContent = '+ Registra';
+  registra.setAttribute('aria-label', 'Registra ' + nome);
+  registra.addEventListener('click', () => {
+    esercizioAperto = nome;
+    renderEsercizi();
+    const aperta = Array.from(eserciziList.querySelectorAll('.esercizio-card.aperta input[data-input="serie"]'))[0];
+    if (aperta) aperta.focus();
+  });
+
+  const riga = document.createElement('div');
+  riga.className = 'es-riga';
+  riga.appendChild(head);
+  riga.appendChild(registra);
 
   const body = document.createElement('div');
   body.className = 'es-body' + (isOpen ? ' open' : '');
@@ -1307,22 +1364,22 @@ function creaEsercizioCard(nome) {
   const pesoInputEs = document.createElement('input');
   pesoInputEs.type = 'number'; pesoInputEs.inputMode = 'decimal'; pesoInputEs.placeholder = 'kg';
   pesoInputEs.dataset.input = 'peso';
-  pesoInputEs.style.cssText = 'flex:1;min-width:0;padding:8px 9px;border:1px solid #d8cfba;border-radius:6px;font-size:14px;background:#fafaf7;';
+  pesoInputEs.style.cssText = 'flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #EAE6DF;border-radius:14px;font-size:16px;background:#FBFAF7;font-family:inherit;';
 
   const ripInputEs = document.createElement('input');
   ripInputEs.type = 'number'; ripInputEs.inputMode = 'numeric'; ripInputEs.placeholder = 'rip';
   ripInputEs.dataset.input = 'rip';
-  ripInputEs.style.cssText = 'flex:1;min-width:0;padding:8px 9px;border:1px solid #d8cfba;border-radius:6px;font-size:14px;background:#fafaf7;';
+  ripInputEs.style.cssText = 'flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #EAE6DF;border-radius:14px;font-size:16px;background:#FBFAF7;font-family:inherit;';
 
   const serieInputEs = document.createElement('input');
   serieInputEs.type = 'number'; serieInputEs.inputMode = 'numeric'; serieInputEs.placeholder = 'serie';
   serieInputEs.dataset.input = 'serie';
-  serieInputEs.style.cssText = 'flex:1;min-width:0;padding:8px 9px;border:1px solid #d8cfba;border-radius:6px;font-size:14px;background:#fafaf7;';
+  serieInputEs.style.cssText = 'flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #EAE6DF;border-radius:14px;font-size:16px;background:#FBFAF7;font-family:inherit;';
 
   const noteInputEs = document.createElement('input');
   noteInputEs.type = 'text'; noteInputEs.placeholder = 'Note (es. RIR 2, sensazioni...)';
   noteInputEs.dataset.input = 'note';
-  noteInputEs.style.cssText = 'width:100%;padding:8px 9px;border:1px solid #d8cfba;border-radius:6px;font-size:13px;background:#fafaf7;margin-bottom:10px;box-sizing:border-box;';
+  noteInputEs.style.cssText = 'width:100%;height:44px;padding:0 12px;border:1px solid #EAE6DF;border-radius:14px;font-size:16px;background:#FBFAF7;margin-bottom:12px;box-sizing:border-box;font-family:inherit;';
 
   const saveBtn = document.createElement('button');
   saveBtn.className = 'es-save-btn';
@@ -1387,7 +1444,7 @@ function creaEsercizioCard(nome) {
     });
   }
 
-  card.appendChild(head);
+  card.appendChild(riga);
   card.appendChild(body);
   return card;
 }
