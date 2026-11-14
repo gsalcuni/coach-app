@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Il Tuo Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -199,22 +202,150 @@
   @keyframes micpulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
   .chat-voice-status { font-size:12px; color:#8a7355; padding:4px 16px 0; min-height:16px; }
   .chat-voice-status.errore { color:#b91c1c; }
+
+  /* ===== Restyling v2: intestazione, navigazione e tab Nutrizione ===== */
+  :root {
+    --bg:#F7F5F0; --surface:#FFFFFF; --line:#EAE6DF; --ink:#1A2B3C; --forest:#234E36;
+    --coral:#D96B52; --amber:#E09F3E; --sage:#5C8D76; --muted:#6B665C; --track:#EFEBE3;
+    --shadow:0 4px 20px -2px rgba(26,43,60,0.04);
+  }
+  body { background:var(--bg); color:var(--ink); font-family:'Plus Jakarta Sans',-apple-system,'Helvetica Neue',Arial,sans-serif; padding-bottom:128px; }
+  header { padding:26px 20px 6px; }
+  .brand { font-size:13px; font-weight:600; color:var(--forest); }
+  .tagline { display:none; font-size:12px; color:var(--muted); margin-top:1px; }
+  .tagline.on { display:block; }
+  h1 { font-family:'Lora',Georgia,serif; font-size:32px; font-weight:600; line-height:1.15; letter-spacing:-0.01em; margin:6px 0 0; }
+  .wrap { padding:0 20px; }
+  :focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+
+  nav { left:50%; right:auto; bottom:16px; width:min(448px, calc(100% - 32px)); transform:translateX(-50%); margin:0; padding:6px; gap:4px; z-index:40;
+        background:rgba(255,255,255,0.72); -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4);
+        border:1px solid rgba(234,230,223,0.9); border-radius:28px; box-shadow:0 8px 30px -6px rgba(26,43,60,0.18); }
+  .nav-btn { padding:8px 0 7px; margin-top:0; border:none; border-radius:22px; color:var(--muted); min-height:52px; transition:background .18s, color .18s; }
+  .nav-btn.active { color:#fff; background:var(--ink); border:none; }
+  .nav-icon { display:flex; justify-content:center; line-height:0; }
+  .nav-label { font-size:11px; margin-top:3px; }
+  .chat-btn { bottom:96px; }
+
+  #tab-nutrizione .intro { margin:6px 0 18px; color:var(--muted); font-size:13.5px; line-height:1.55; max-width:62ch; flex:1; }
+  .nut-bar { display:flex; align-items:flex-start; gap:12px; }
+  .info-btn { flex:0 0 auto; width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--ink); display:grid; place-items:center; cursor:pointer; box-shadow:var(--shadow); }
+
+  .day-switch { display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; background:var(--track); border-radius:999px; margin-bottom:16px; }
+  .day-pill { border:none; background:transparent; border-radius:999px; padding:9px 10px; font:inherit; color:var(--muted); cursor:pointer; text-align:center; min-height:52px; transition:background .18s, color .18s; }
+  .day-pill .t1 { font-size:13.5px; font-weight:700; }
+  .day-pill .t2 { font-size:11px; margin-top:1px; }
+  .day-pill.active { background:var(--surface); color:var(--ink); box-shadow:0 2px 10px -2px rgba(26,43,60,0.14); }
+
+  .ring-card { background:var(--surface); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); padding:20px 18px; margin-bottom:14px; display:flex; align-items:center; gap:14px; }
+  .ring { position:relative; width:124px; height:124px; flex:0 0 auto; }
+  .ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+  .ring circle { transition:stroke-dasharray .35s ease, stroke-dashoffset .35s ease; }
+  .ring-center { position:absolute; inset:0; display:grid; place-content:center; text-align:center; }
+  .ring-kcal { font-size:27px; font-weight:700; line-height:1; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+  .ring-unit { font-size:12px; color:var(--muted); margin-top:3px; }
+  .ring-legend { flex:1; min-width:0; }
+  .ring-title { font-size:13px; font-weight:700; margin-bottom:4px; }
+  .legend-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .legend-row:last-child { border-bottom:none; padding-bottom:0; }
+  .legend-name { display:flex; align-items:center; gap:7px; min-width:0; white-space:nowrap; }
+  .legend-val { display:flex; align-items:baseline; gap:5px; flex:0 0 auto; font-variant-numeric:tabular-nums; }
+  .legend-val b { font-weight:700; }
+  .legend-val span { font-size:11.5px; color:var(--muted); }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; flex:0 0 auto; }
+
+  .nut-card { background:var(--surface); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow); padding:18px; margin-bottom:20px; }
+  .nut-card .card-label { font-size:13px; font-weight:700; text-transform:none; letter-spacing:0; color:var(--ink); margin-bottom:12px; }
+  #tab-nutrizione .field label { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  #tab-nutrizione .field input { height:46px; padding:0 12px; border:1px solid var(--line); border-radius:14px; background:#FBFAF7; font-size:16px; font-variant-numeric:tabular-nums; }
+  #tab-nutrizione .field input:focus { outline:2px solid var(--ink); outline-offset:1px; border-color:var(--ink); }
+  .section-title { font-size:13px; color:var(--muted); font-weight:600; margin:0 4px 10px; }
+
+  #macro-accordions .macro-acc { background:var(--surface); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); margin-bottom:10px; overflow:hidden; }
+  #macro-accordions .macro-acc:last-child { border-bottom:1px solid var(--line); }
+  #macro-accordions .macro-head { padding:0 18px; min-height:64px; }
+  #macro-accordions .macro-head-left { gap:12px; }
+  #macro-accordions .dot { width:12px; height:12px; border-radius:50%; }
+  #macro-accordions .macro-head-label { font-size:15px; }
+  #macro-accordions .macro-head-right { gap:12px; }
+  #macro-accordions .macro-head-grams { font-size:17px; font-variant-numeric:tabular-nums; }
+  #macro-accordions .macro-head-pct { font-size:12px; font-weight:600; color:var(--muted); margin-left:2px; }
+  #macro-accordions .chevron { display:inline-flex; color:var(--muted); transition:transform .2s; font-size:0; }
+  #macro-accordions .chevron.open { transform:rotate(90deg); }
+  #macro-accordions .macro-body { padding:0 18px 6px; border-top:1px solid var(--line); }
+  #macro-accordions .macro-body.open { animation:nutApri .22s ease-out; }
+  #macro-accordions .alim-row { padding:13px 0; border-bottom:1px solid #F1EEE8; font-size:13px; gap:12px; }
+  #macro-accordions .alim-row:last-child { border-bottom:none; }
+  #macro-accordions .alim-name { font-size:13.5px; }
+  #macro-accordions .alim-sub { font-size:11.5px; color:var(--muted); margin-top:2px; font-variant-numeric:tabular-nums; }
+  #macro-accordions .alim-grams { font-size:15px; font-variant-numeric:tabular-nums; }
+  #macro-accordions .alim-kcal { font-size:11.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  @keyframes nutApri { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+
+  /* Il testo "Come usarlo" resta nella pagina come àncora per il piano generato dall'assessment, ma si legge nel pannello (i) */
+  #tab-nutrizione .footnote { display:none; }
+  #piano-nutrizionale-completo-card, #tab-nutrizione > .card { border-radius:24px; border-color:var(--line); box-shadow:var(--shadow); margin-bottom:14px; }
+
+  .sheet-backdrop { position:fixed; inset:0; z-index:200; display:none; align-items:flex-end; justify-content:center; background:rgba(26,43,60,0.38); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+  .sheet-backdrop.open { display:flex; }
+  .sheet { background:var(--surface); width:min(480px,100%); max-height:80vh; overflow:auto; border-radius:24px 24px 0 0; padding:24px 22px 26px; box-shadow:0 -10px 40px -10px rgba(26,43,60,0.25); animation:nutSale .24s ease-out; }
+  .sheet-body { font-size:14px; line-height:1.65; color:var(--ink); max-width:62ch; }
+  .sheet-body strong { color:var(--ink); }
+  .sheet-close { margin-top:18px; width:100%; min-height:48px; border:none; border-radius:16px; background:var(--ink); color:#fff; font:inherit; font-weight:700; cursor:pointer; }
+  @keyframes nutSale { from { transform:translateY(24px); opacity:0; } to { transform:none; opacity:1; } }
+
+  @media (max-width:370px) { .ring { width:116px; height:116px; } .ring-kcal { font-size:25px; } .ring-card { gap:12px; padding:16px; } }
+  @media (prefers-reduced-motion: reduce) {
+    .ring circle, .nav-btn, .day-pill, #macro-accordions .chevron { transition:none; }
+    #macro-accordions .macro-body.open, .sheet { animation:none; }
+  }
 </style>
 </head>
 <body>
 <div id="banner-test" style="position:sticky;top:0;z-index:99999;background:#0369a1;color:#fff;font:600 12px/1.4 system-ui,sans-serif;padding:6px 10px;text-align:center;">AMBIENTE DI TEST (v2) — verifica bin in corso…</div>
 
 <header>
-  <div class="eyebrow">Mental &amp; Personal Trainer</div>
-  <h1>Il Tuo Coach</h1>
+  <div class="brand">Il Tuo Coach</div>
+  <div class="tagline on" id="header-tagline">Mental &amp; Personal Trainer</div>
+  <h1 id="page-title">Nutrizione</h1>
 </header>
 
 <div class="wrap">
 
   <div class="tab-content active" id="tab-nutrizione">
-    <p class="intro">Target calibrato sulla scheda Push/Pull/Total Body. Obiettivo: ricomposizione corporea.</p>
+    <div class="nut-bar">
+      <p class="intro">Target calibrato sulla scheda Push/Pull/Total Body. Obiettivo: ricomposizione corporea.</p>
+      <button type="button" class="info-btn" id="nut-info-btn" aria-label="Come usarlo" aria-haspopup="dialog" aria-controls="nut-info-sheet"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></button>
+    </div>
 
-    <div class="card">
+    <div class="day-switch" role="group" aria-label="Tipo di giorno">
+      <button type="button" class="day-pill active" id="btn-allenamento" aria-pressed="true">
+        <div class="t1">Giorno Allenamento</div><div class="t2">Lun · Mer · Ven</div>
+      </button>
+      <button type="button" class="day-pill" id="btn-riposo" aria-pressed="false">
+        <div class="t1">Giorno Riposo</div><div class="t2">Mar · Gio · Sab · Dom</div>
+      </button>
+    </div>
+
+    <div class="ring-card">
+      <div class="ring" role="img" aria-label="Ripartizione calorica tra proteine, carboidrati e grassi">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="48" fill="none" stroke="var(--track)" stroke-width="12"/>
+          <circle id="ring-p" cx="60" cy="60" r="48" fill="none" stroke="var(--coral)" stroke-width="12" stroke-dasharray="0 302" stroke-dashoffset="0"/>
+          <circle id="ring-c" cx="60" cy="60" r="48" fill="none" stroke="var(--amber)" stroke-width="12" stroke-dasharray="0 302" stroke-dashoffset="0"/>
+          <circle id="ring-g" cx="60" cy="60" r="48" fill="none" stroke="var(--sage)" stroke-width="12" stroke-dasharray="0 302" stroke-dashoffset="0"/>
+        </svg>
+        <div class="ring-center"><div class="ring-kcal"><span id="kcal-value">0</span></div><div class="ring-unit">kcal</div></div>
+      </div>
+      <div class="ring-legend">
+        <div class="ring-title">Target calorico</div>
+        <div class="legend-row"><span class="legend-name"><i class="dot" style="background:var(--coral)"></i>Proteine</span><span class="legend-val"><b id="lg-p-g">0g</b><span id="lg-p-pct">0%</span></span></div>
+        <div class="legend-row"><span class="legend-name"><i class="dot" style="background:var(--amber)"></i>Carboidrati</span><span class="legend-val"><b id="lg-c-g">0g</b><span id="lg-c-pct">0%</span></span></div>
+        <div class="legend-row"><span class="legend-name"><i class="dot" style="background:var(--sage)"></i>Grassi</span><span class="legend-val"><b id="lg-g-g">0g</b><span id="lg-g-pct">0%</span></span></div>
+      </div>
+    </div>
+
+    <div class="nut-card">
       <div class="card-label">I tuoi dati</div>
       <div class="inputs-grid">
         <div class="field"><label>Peso (kg)</label><input type="number" id="peso" value="80"></div>
@@ -223,29 +354,8 @@
       </div>
     </div>
 
-    <div class="toggle-row">
-      <div class="toggle-btn active" id="btn-allenamento">
-        <div class="t1">Giorno Allenamento</div><div class="t2">Lun · Mer · Ven</div>
-      </div>
-      <div class="toggle-btn" id="btn-riposo">
-        <div class="t1">Giorno Riposo</div><div class="t2">Mar · Gio · Sab · Dom</div>
-      </div>
-    </div>
-
-    <div class="calorie-card">
-      <div class="card-label">Target calorico</div>
-      <div class="calorie-big"><span id="kcal-value">0</span> <span>kcal</span></div>
-    </div>
-
-    <div class="card">
-      <div class="card-label">Macronutrienti — tocca per vedere alternative</div>
-      <div class="bar">
-        <div id="bar-p" style="background:#b3504f"></div>
-        <div id="bar-c" style="background:#c9a24b"></div>
-        <div id="bar-g" style="background:#6b8e7a"></div>
-      </div>
-      <div id="macro-accordions"></div>
-    </div>
+    <div class="section-title">Macronutrienti — tocca per vedere alternative</div>
+    <div id="macro-accordions"></div>
 
     <div class="footnote">
       <strong>Come usarlo:</strong> i grammi mostrati per ogni alimento sono la quantità che, da sola, coprirebbe l'intero target giornaliero di quel macronutriente — usali come riferimento per combinare più fonti nei tuoi pasti. Pesati 2-3 volte a settimana per tarare nel tempo.
@@ -574,20 +684,26 @@
   </div>
 </div>
 
-<nav>
+<nav aria-label="Navigazione principale">
   <button class="nav-btn active" id="nav-nutrizione">
-    <div class="nav-icon">🍽</div><div class="nav-label">Nutrizione</div>
+    <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg></div><div class="nav-label">Nutrizione</div>
   </button>
   <button class="nav-btn" id="nav-allenamento">
-    <div class="nav-icon">🏋</div><div class="nav-label">Allenamento</div>
+    <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3.5 9v6"/><path d="M20.5 9v6"/><path d="M6.5 12h11"/></svg></div><div class="nav-label">Allenamento</div>
   </button>
   <button class="nav-btn" id="nav-diario">
-    <div class="nav-icon">📓</div><div class="nav-label">Diario</div>
+    <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></div><div class="nav-label">Diario</div>
   </button>
   <button class="nav-btn" id="nav-profilo">
-    <div class="nav-icon">👤</div><div class="nav-label">Profilo</div>
+    <div class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="nav-label">Profilo</div>
   </button>
 </nav>
+<div class="sheet-backdrop" id="nut-info-sheet" role="dialog" aria-modal="true" aria-label="Come usarlo" hidden>
+  <div class="sheet">
+    <div class="sheet-body" id="nut-info-body"></div>
+    <button type="button" class="sheet-close" id="nut-info-close">Chiudi</button>
+  </div>
+</div>
 
 <script>
 const ALIMENTI = {
@@ -638,10 +754,55 @@ const ALIMENTI = {
 };
 
 const CATEGORIE = {
-  proteine: { colore: '#b3504f', label: 'Proteine', key: 'p' },
-  carboidrati: { colore: '#c9a24b', label: 'Carboidrati', key: 'c' },
-  grassi: { colore: '#6b8e7a', label: 'Grassi', key: 'g' },
+  proteine: { colore: '#D96B52', label: 'Proteine', key: 'p' },
+  carboidrati: { colore: '#E09F3E', label: 'Carboidrati', key: 'c' },
+  grassi: { colore: '#5C8D76', label: 'Grassi', key: 'g' },
 };
+
+
+// UI-ICONS: icone a linea sottile (stile Lucide) al posto delle emoji di sistema
+function icona(d, size) {
+  size = size || 14;
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px;">' + d + '</svg>';
+}
+const ICONE = {
+  allenamento: '<path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3.5 9v6"/><path d="M20.5 9v6"/><path d="M6.5 12h11"/>',
+  riposo: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  pasto: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  sole: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  mela: '<path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>',
+  bevanda: '<path d="M5 8h14l-1.5 13h-11Z"/><path d="M8 8l1-5h6l1 5"/>',
+  luna: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'
+};
+const CHEVRON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+
+// RING-START
+// Anello del target calorico: restituisce lunghezza e offset (in unità SVG) dei tre archi, con un piccolo stacco tra l'uno e l'altro.
+function calcolaAnello(pct, raggio, stacco) {
+  const C = 2 * Math.PI * (raggio || 48);
+  const gap = stacco == null ? 3 : stacco;
+  const ordine = ['proteine', 'carboidrati', 'grassi'];
+  let cumulato = 0;
+  const out = {};
+  ordine.forEach(function (k) {
+    const frazione = Math.max(0, Math.min(100, pct[k] || 0)) / 100;
+    const len = Math.max(frazione * C - (frazione > 0 ? gap : 0), 0);
+    out[k] = { len: len, resto: C - len, offset: -cumulato };
+    cumulato += frazione * C;
+  });
+  out.circonferenza = C;
+  return out;
+}
+// RING-END
+function aggiornaAnello(pct) {
+  const a = calcolaAnello(pct, 48, 3);
+  [['proteine', 'ring-p'], ['carboidrati', 'ring-c'], ['grassi', 'ring-g']].forEach(function (x) {
+    const el = document.getElementById(x[1]);
+    if (!el) return;
+    el.setAttribute('stroke-dasharray', a[x[0]].len.toFixed(2) + ' ' + a[x[0]].resto.toFixed(2));
+    el.setAttribute('stroke-dashoffset', a[x[0]].offset.toFixed(2));
+  });
+}
 
 // Core in ogni sessione (come nel piano generato dall'assessment).
 const CORE_DEFAULT = ['Dead Bug', 'Bird Dog', 'Pallof Press', 'Plank TRX'];
@@ -843,6 +1004,20 @@ async function salvaStoricoLocale(chiave) {
   return await binSet(BIN_ALLENAMENTO, JSON.stringify(storico));
 }
 
+// Pannello (i): mostra il testo originale di .footnote ("Come usarlo")
+(function () {
+  const sheet = document.getElementById('nut-info-sheet');
+  const body = document.getElementById('nut-info-body');
+  const apri = document.getElementById('nut-info-btn');
+  const chiudi = document.getElementById('nut-info-close');
+  const nota = document.querySelector('#tab-nutrizione .footnote');
+  function mostra(v) { sheet.classList.toggle('open', v); sheet.hidden = !v; if (v) chiudi.focus(); else apri.focus(); }
+  apri.addEventListener('click', function () { body.innerHTML = nota ? nota.innerHTML : ''; mostra(true); });
+  chiudi.addEventListener('click', function () { mostra(false); });
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) mostra(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheet.classList.contains('open')) mostra(false); });
+})();
+
 document.getElementById('nav-nutrizione').addEventListener('click', () => switchTab('nutrizione'));
 document.getElementById('nav-allenamento').addEventListener('click', () => switchTab('allenamento'));
 document.getElementById('nav-diario').addEventListener('click', () => { switchTab('diario'); renderStoricoDiario(); });
@@ -856,6 +1031,11 @@ function switchTab(tab) {
   document.getElementById('nav-allenamento').classList.toggle('active', tab === 'allenamento');
   document.getElementById('nav-diario').classList.toggle('active', tab === 'diario');
   document.getElementById('nav-profilo').classList.toggle('active', tab === 'profilo');
+  const TITOLI = { nutrizione: 'Nutrizione', allenamento: 'Allenamento', diario: 'Diario', profilo: 'Profilo' };
+  const titolo = document.getElementById('page-title');
+  if (titolo) titolo.textContent = TITOLI[tab] || 'Il Tuo Coach';
+  const tag = document.getElementById('header-tagline');
+  if (tag) tag.classList.toggle('on', tab === 'nutrizione');
 }
 
 const pesoInput = document.getElementById('peso');
@@ -899,9 +1079,13 @@ function renderNutrizione() {
   const grammi = { proteine: t.proteine, carboidrati: t.carbs, grassi: t.grassi };
 
   document.getElementById('kcal-value').textContent = t.calorie;
-  document.getElementById('bar-p').style.width = pct.proteine + '%';
-  document.getElementById('bar-c').style.width = pct.carboidrati + '%';
-  document.getElementById('bar-g').style.width = pct.grassi + '%';
+  aggiornaAnello(pct);
+  [['p', 'proteine'], ['c', 'carboidrati'], ['g', 'grassi']].forEach(function (x) {
+    document.getElementById('lg-' + x[0] + '-g').textContent = grammi[x[1]] + 'g';
+    document.getElementById('lg-' + x[0] + '-pct').textContent = pct[x[1]] + '%';
+  });
+  btnAllenamento.setAttribute('aria-pressed', String(tipoGiorno === 'allenamento'));
+  btnRiposo.setAttribute('aria-pressed', String(tipoGiorno === 'riposo'));
 
   macroAccordionsEl.innerHTML = '';
   Object.keys(CATEGORIE).forEach((cat) => {
@@ -925,8 +1109,9 @@ function creaAccordion(cat, grammiTarget, pctVal) {
     '</div>' +
     '<div class="macro-head-right">' +
       '<span class="macro-head-grams">' + grammiTarget + 'g <span class="macro-head-pct">(' + pctVal + '%)</span></span>' +
-      '<span class="chevron ' + (isOpen ? 'open' : '') + '">\u203A</span>' +
+      '<span class="chevron ' + (isOpen ? 'open' : '') + '">' + CHEVRON_SVG + '</span>' +
     '</div>';
+  head.setAttribute('aria-expanded', String(isOpen));
   head.addEventListener('click', () => {
     categoriaAperta = isOpen ? null : cat;
     renderNutrizione();
@@ -1922,8 +2107,8 @@ function formatDieta(dieta, pasti, params) {
     <div style="border:1px solid #e0d9c8;border-radius:6px;overflow:hidden;">
       <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;background:#1a2b3a;padding:7px 10px;">
         <div style="font-size:10px;font-weight:700;color:#f4f1ea;text-transform:uppercase;"></div>
-        <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;">🏋 Allenamento</div>
-        <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;">😴 Riposo</div>
+        <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;">${icona(ICONE.allenamento,12)}Allenamento</div>
+        <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;">${icona(ICONE.riposo,12)}Riposo</div>
       </div>
       ${[
         ['🔥 Kcal totali', tdeeAll+'kcal', tdeeRip+'kcal'],
@@ -2020,7 +2205,7 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
     div.id = 'piano-nutrizionale-completo-card';
     div.className = 'card';
     div.style.cssText = 'margin-top:16px;';
-    div.innerHTML = `<div class="card-label" style="margin-bottom:10px;">🍽 Piano Nutrizionale da Assessment AI</div>
+    div.innerHTML = `<div class="card-label" style="margin-bottom:10px;">${icona(ICONE.pasto,14)}Piano Nutrizionale da Assessment AI</div>
       <div style="font-size:13px;color:#3a4055;line-height:1.5;">${formatMarkdownLibero(dietaTesto)}</div>`;
     const footnote = document.querySelector('#tab-nutrizione .footnote');
     if (footnote) footnote.after(div);
@@ -2042,11 +2227,11 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
 
   // Distribuzione pasti con percentuali differenziate
   const pastiDef = [
-    { nome: '☀️ Colazione',      pctAll: 0.22, pctRip: 0.22, pPctAll: 0.22, pPctRip: 0.22, cPctAll: 0.28, cPctRip: 0.18, gPct: 0.20 },
-    { nome: '🍎 Metà Mattina',   pctAll: 0.10, pctRip: 0.08, pPctAll: 0.12, pPctRip: 0.10, cPctAll: 0.10, cPctRip: 0.06, gPct: 0.10 },
-    { nome: '🍽 Pranzo',         pctAll: 0.30, pctRip: 0.32, pPctAll: 0.30, pPctRip: 0.30, cPctAll: 0.32, cPctRip: 0.30, gPct: 0.28 },
-    { nome: '🥤 Metà Pomeriggio',pctAll: 0.10, pctRip: 0.08, pPctAll: 0.12, pPctRip: 0.10, cPctAll: 0.10, cPctRip: 0.06, gPct: 0.10 },
-    { nome: '🌙 Cena',           pctAll: 0.28, pctRip: 0.30, pPctAll: 0.24, pPctRip: 0.28, cPctAll: 0.20, cPctRip: 0.40, gPct: 0.32 },
+    { nome: 'Colazione', icona: 'sole',      pctAll: 0.22, pctRip: 0.22, pPctAll: 0.22, pPctRip: 0.22, cPctAll: 0.28, cPctRip: 0.18, gPct: 0.20 },
+    { nome: 'Metà Mattina', icona: 'mela',   pctAll: 0.10, pctRip: 0.08, pPctAll: 0.12, pPctRip: 0.10, cPctAll: 0.10, cPctRip: 0.06, gPct: 0.10 },
+    { nome: 'Pranzo', icona: 'pasto',         pctAll: 0.30, pctRip: 0.32, pPctAll: 0.30, pPctRip: 0.30, cPctAll: 0.32, cPctRip: 0.30, gPct: 0.28 },
+    { nome: 'Metà Pomeriggio', icona: 'bevanda',pctAll: 0.10, pctRip: 0.08, pPctAll: 0.12, pPctRip: 0.10, cPctAll: 0.10, cPctRip: 0.06, gPct: 0.10 },
+    { nome: 'Cena', icona: 'luna',           pctAll: 0.28, pctRip: 0.30, pPctAll: 0.24, pPctRip: 0.28, cPctAll: 0.20, cPctRip: 0.40, gPct: 0.32 },
   ];
 
   // Rimuovi eventuale precedente
@@ -2066,8 +2251,8 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
       <div style="border:1px solid #e0d9c8;border-radius:6px;overflow:hidden;margin-bottom:14px;">
         <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:#1a2b3a;padding:7px 10px;">
           <div style="font-size:10px;font-weight:700;color:#f4f1ea;text-transform:uppercase;letter-spacing:0.06em;"></div>
-          <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">🏋 Allen.</div>
-          <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">😴 Riposo</div>
+          <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">${icona(ICONE.allenamento,12)}Allen.</div>
+          <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">${icona(ICONE.riposo,12)}Riposo</div>
         </div>
         ${[
           ['🔥 Kcal', tdeeAll+'', tdeeRip+''],
@@ -2087,8 +2272,8 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
       <div style="border:1px solid #e0d9c8;border-radius:6px;overflow:hidden;">
         <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:#1a2b3a;padding:7px 10px;">
           <div style="font-size:10px;font-weight:700;color:#f4f1ea;text-transform:uppercase;letter-spacing:0.06em;">Pasto</div>
-          <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">🏋 Allen.</div>
-          <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">😴 Riposo</div>
+          <div style="font-size:10px;font-weight:700;color:#e8ff6b;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">${icona(ICONE.allenamento,12)}Allen.</div>
+          <div style="font-size:10px;font-weight:700;color:#9dcb8c;text-align:center;text-transform:uppercase;letter-spacing:0.06em;">${icona(ICONE.riposo,12)}Riposo</div>
         </div>
         ${pastiDef.map((p, i) => {
           const kcalA = Math.round(tdeeAll * p.pctAll);
@@ -2100,7 +2285,7 @@ function popolaTabNutrizioneAssessment(dietaTesto, params) {
           const gA = Math.round(grassiAll * p.gPct);
           const gR = Math.round(grassiRip * p.gPct);
           return `<div style="display:grid;grid-template-columns:1.2fr 1fr 1fr;background:${i%2===0?'#fafaf7':'#fff'};border-top:1px solid #f0ede6;">
-            <div style="padding:7px 10px;font-size:12px;color:#5a5248;">${p.nome}</div>
+            <div style="padding:7px 10px;font-size:12px;color:#5a5248;">${icona(ICONE[p.icona],13)}${p.nome}</div>
             <div style="padding:7px 10px;font-size:11px;color:#1a2b3a;text-align:center;"><b>${kcalA}kcal</b><br><span style="color:#666;">P${pA} C${cA} G${gA}</span></div>
             <div style="padding:7px 10px;font-size:11px;color:#2d5a3d;text-align:center;"><b>${kcalR}kcal</b><br><span style="color:#666;">P${pR} C${cR} G${gR}</span></div>
           </div>`;

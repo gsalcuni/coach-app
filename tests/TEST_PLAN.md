@@ -83,3 +83,12 @@ Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di 
 5. **Ruotare la chiave master di JSONBin** e aggiornare `JSONBIN_KEY` su Netlify (la vecchia è stata esposta nell'HTML pubblico).
 6. Merge di `v2` su `main`, deploy, verifica con una voce reale.
 7. Piano di rientro: se qualcosa non va, revert del merge e ripristino dei bin dal backup.
+
+## F6 — Restyling tab Nutrizione (Step 1)
+- [ ] Pillola Allenamento/Riposo: cambia il target (2845 → 2495 kcal con 80/185/38) e `aria-pressed` segue.
+- [ ] Anello: archi proporzionali, `#kcal-value` al centro, legenda con grammi e % uguali a quelli degli accordion.
+- [ ] Accordion Proteine/Carboidrati/Grassi: si aprono uno alla volta, alimenti e grammature identici a prima.
+- [ ] Icona (i): mostra il testo "Come usarlo" originale; chiude con Esc, clic fuori, "Chiudi".
+- [ ] Titolo di pagina cambia per tab; tagline solo su Nutrizione.
+- [ ] Dopo un assessment: card "Piano Nutrizionale da Assessment AI" e "Distribuzione Pasti" visibili, senza emoji.
+- [ ] Nav flottante leggibile su iPhone e PC; tasto chat non copre la nav.
