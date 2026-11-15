@@ -3,7 +3,7 @@
 const https = require('https');
 
 const BIN_BASE_PATH = '/v3/b/';
-const ALIAS = { allenamento: 'BIN_ALLENAMENTO', diario: 'BIN_DIARIO' };
+const ALIAS = { allenamento: 'BIN_ALLENAMENTO', diario: 'BIN_DIARIO', memoria: 'BIN_MEMORIA' };
 // Bin di produzione: scrivibili solo se ALLOW_PROD_BINS=1 (da impostare al passaggio in produzione).
 const BIN_PRODUZIONE = ['6a4599beda38895dfe1ef074', '6a4599e2f5f4af5e29508282'];
 const MAX_VALUE_CHARS = 900000;

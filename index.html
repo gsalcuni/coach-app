@@ -1029,6 +1029,7 @@ const STORAGE_KEY = 'coach_allenamento_storico';
 // BIN_* sono alias ('allenamento', 'diario'); gli ID reali sono variabili d'ambiente su Netlify.
 const BIN_ALLENAMENTO = 'allenamento';
 const BIN_DIARIO = 'diario';
+const BIN_MEMORIA = 'memoria';
 const JSONBIN_PROXY = '/.netlify/functions/jsonbin-proxy';
 
 async function proxyCall(payload) {
@@ -1739,6 +1740,7 @@ document.getElementById('diario-save-btn').addEventListener('click', async funct
   const voci = voci_attuali.filter(function(v) { return v.data !== oggi(); });
   voci.unshift(voce);
   const ok = await salvaDiario(voci.slice(0, 90));
+  if (ok) aggiornaContestoDiario(voci);
 
   const msg = document.getElementById('diario-msg');
   msg.textContent = ok ? 'Salvato ✓ — ' + formatDataDiario(oggi()) : 'Errore salvataggio';
@@ -3034,8 +3036,167 @@ function toggleReport(id) {
 /* =========================================================
    CHAT DRAWER
 ========================================================= */
+// DIARIO-CTX-START
+// Sintesi del diario degli ultimi giorni da aggiungere al prompt del coach (solo dati inseriti dall'utente).
+const DIARIO_CTX_GIORNI = 7;
+const DIARIO_CTX_MAX_CHAR = 2200;
+function diarioPerPrompt(voci, dataOggi, giorni) {
+  const n = giorni || DIARIO_CTX_GIORNI;
+  const elenco = Array.isArray(voci) ? voci.filter(function (v) { return v && typeof v.data === 'string'; }) : [];
+  const ref = new Date(dataOggi + 'T12:00:00Z');
+  if (isNaN(ref.getTime())) return '';
+  const limite = new Date(ref.getTime() - (n - 1) * 86400000).toISOString().slice(0, 10);
+  const recenti = elenco.filter(function (v) { return v.data >= limite && v.data <= dataOggi; })
+    .sort(function (a, b) { return a.data < b.data ? 1 : -1; });
+  if (!recenti.length) return '';
+  const tronca = function (t, m) { t = String(t || '').trim().replace(/\s+/g, ' '); return t.length > m ? t.slice(0, m - 1) + '…' : t; };
+  const righe = recenti.map(function (v) {
+    const p = [];
+    if (v.sonno_ore) p.push('sonno ' + v.sonno_ore + 'h' + (v.sonno_qualita ? ' (qualità ' + v.sonno_qualita + '/5)' : ''));
+    if (v.stato_emotivo) p.push('umore ' + v.stato_emotivo + '/5');
+    if (v.energia) p.push('energia ' + v.energia + '/5');
+    if (Array.isArray(v.sintomi) && v.sintomi.length) p.push('sintomi: ' + v.sintomi.map(function (x) { return tronca(x && x.nome, 60) + (x && x.intensita ? ' (' + x.intensita + '/5)' : ''); }).join(', '));
+    p.push(v.brain_dump ? 'brain dump fatto' : 'brain dump NON fatto');
+    p.push(v.respiro ? 'respiro fatto' : 'respiro NON fatto');
+    p.push(v.palestra ? 'allenamento/movimento fatto' : 'allenamento/movimento NON fatto');
+    if (v.azione_domani) p.push('azione per il giorno dopo: ' + tronca(v.azione_domani, 150));
+    if (v.fiero_oggi) p.push('fiero di: ' + tronca(v.fiero_oggi, 150));
+    if (v.note) p.push('note: ' + tronca(v.note, 200));
+    return '- ' + v.data + ': ' + p.join('; ');
+  });
+  const senza = n - recenti.length;
+  let t = 'DIARIO DELL\'UTENTE, ultimi ' + n + ' giorni (dati inseriti da lui; ' + recenti.length + ' giorni compilati, ' + senza + ' senza voce; non inventare ciò che non c\'è):\n' + righe.join('\n');
+  if (t.length > DIARIO_CTX_MAX_CHAR) t = t.slice(0, DIARIO_CTX_MAX_CHAR - 1) + '…';
+  return t;
+}
+// DIARIO-CTX-END
+
+// MEMORIA-START
+// Memoria persistente del coach: storico chat + profilo sintetico dell'utente (bin dedicato, schema per utente).
+const MEMORIA_USER_ID = 'gianluca';
+const MEMORIA_MAX_MSG = 40;       // messaggi conservati nel bin
+const MEMORIA_CONTESTO_MSG = 12;  // messaggi reinviati al modello
+const MEMORIA_AGGIORNA_OGNI = 10; // messaggi utente non sintetizzati che fanno scattare l'aggiornamento
+const MEMORIA_MAX_CHAR_MSG = 2000;
+function memoriaVuota() { return { userId: MEMORIA_USER_ID, storico: [], profilo: null }; }
+function normalizzaMemoria(raw) {
+  let o = raw;
+  if (typeof o === 'string') { try { o = JSON.parse(o); } catch (e) { o = null; } }
+  const m = memoriaVuota();
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return m;
+  if (Array.isArray(o.storico)) {
+    m.storico = o.storico.filter(function (x) {
+      return x && (x.r === 'user' || x.r === 'assistant') && typeof x.t === 'string' && x.t.trim() && typeof x.ts === 'string';
+    }).slice(-MEMORIA_MAX_MSG);
+  }
+  if (o.profilo && typeof o.profilo === 'object' && !Array.isArray(o.profilo)) m.profilo = o.profilo;
+  return m;
+}
+function aggiungiMessaggioMemoria(mem, ruolo, testo, ts) {
+  const t = String(testo || '').trim().slice(0, MEMORIA_MAX_CHAR_MSG);
+  if (!t || (ruolo !== 'user' && ruolo !== 'assistant')) return mem;
+  const storico = mem.storico.concat([{ r: ruolo, t: t, ts: ts || new Date().toISOString() }]).slice(-MEMORIA_MAX_MSG);
+  return { userId: mem.userId, storico: storico, profilo: mem.profilo };
+}
+function messaggiNonSintetizzati(mem) {
+  const fino = (mem.profilo && typeof mem.profilo.sinteticoFinoA === 'string') ? mem.profilo.sinteticoFinoA : '';
+  return mem.storico.filter(function (x) { return x.ts > fino; });
+}
+function serveAggiornamentoProfilo(mem, ogni) {
+  const n = messaggiNonSintetizzati(mem).filter(function (x) { return x.r === 'user'; }).length;
+  return n >= (ogni || MEMORIA_AGGIORNA_OGNI);
+}
+function haMessaggiDaSintetizzare(mem) {
+  return messaggiNonSintetizzati(mem).some(function (x) { return x.r === 'user'; });
+}
+// Ultimi messaggi da reinviare al modello (devono iniziare con un messaggio dell'utente).
+function messaggiPerModello(mem) {
+  const ultimi = mem.storico.slice(-MEMORIA_CONTESTO_MSG).map(function (x) { return { role: x.r, content: x.t }; });
+  while (ultimi.length && ultimi[0].role !== 'user') ultimi.shift();
+  return ultimi;
+}
+const MEMORIA_CAMPI = [
+  ['obiettivi', 'Obiettivi dichiarati'], ['pattern', 'Abitudini e pattern ricorrenti'], ['resistenze', 'Resistenze e ostacoli dichiarati'],
+  ['fisico', 'Condizioni e limiti fisici dichiarati'], ['eventi', 'Eventi recenti'], ['impegni_aperti', 'Impegni presi e ancora aperti']
+];
+function promptProfilo(precedente, messaggi) {
+  const prec = precedente ? JSON.stringify(MEMORIA_CAMPI.reduce(function (o, c) { o[c[0]] = precedente[c[0]] || []; return o; }, {})) : '{}';
+  const conv = messaggi.map(function (x) { return (x.r === 'user' ? 'UTENTE' : 'COACH') + ': ' + x.t; }).join('\n');
+  return 'Aggiorna il profilo sintetico di un cliente di coaching a partire dalla conversazione.\n' +
+    'REGOLE: scrivi SOLO ciò che l\'UTENTE ha dichiarato esplicitamente; non dedurre diagnosi, tratti di personalità o motivazioni; ignora ciò che è ambiguo; ' +
+    'non registrare ciò che dice il COACH, salvo gli impegni che l\'utente ha accettato. Mantieni le voci del profilo precedente, a meno che l\'utente le abbia smentite. ' +
+    'Ogni voce è una frase breve (max 150 caratteri), massimo 8 voci per campo.\n' +
+    'Rispondi con UN SOLO oggetto JSON, senza testo prima o dopo, con questi campi (array di stringhe): ' + MEMORIA_CAMPI.map(function (c) { return c[0]; }).join(', ') + '.\n\n' +
+    'PROFILO PRECEDENTE:\n' + prec + '\n\nCONVERSAZIONE:\n' + conv;
+}
+function validaProfilo(testo, ts, sinteticoFinoA) {
+  let t = String(testo || '');
+  const i = t.indexOf('{'), j = t.lastIndexOf('}');
+  if (i < 0 || j <= i) return null;
+  let o;
+  try { o = JSON.parse(t.slice(i, j + 1)); } catch (e) { return null; }
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
+  const out = { versione: 1, userId: MEMORIA_USER_ID, aggiornato: ts, sinteticoFinoA: sinteticoFinoA };
+  let totale = 0;
+  MEMORIA_CAMPI.forEach(function (c) {
+    const v = Array.isArray(o[c[0]]) ? o[c[0]] : [];
+    out[c[0]] = v.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (x) { return x.trim().slice(0, 150); }).slice(0, 8);
+    totale += out[c[0]].length;
+  });
+  if (totale === 0 && !MEMORIA_CAMPI.some(function (c) { return Array.isArray(o[c[0]]); })) return null;
+  return out;
+}
+// Blocco di testo da aggiungere al prompt di sistema; vuoto se non c'è profilo.
+function testoProfiloPerPrompt(profilo) {
+  if (!profilo) return '';
+  const righe = [];
+  MEMORIA_CAMPI.forEach(function (c) {
+    const v = Array.isArray(profilo[c[0]]) ? profilo[c[0]] : [];
+    if (v.length) righe.push(c[1] + ': ' + v.join('; '));
+  });
+  if (!righe.length) return '';
+  return 'MEMORIA SUL CLIENTE (solo ciò che ha dichiarato lui' + (profilo.aggiornato ? ', aggiornata il ' + String(profilo.aggiornato).slice(0, 10) : '') + '; usala per fare domande più mirate, senza ripeterla a pappagallo):\n' + righe.join('\n');
+}
+// MEMORIA-END
+
 let chatHistory = [];
 let chatAssessmentContext = '';
+
+let chatDiarioContext = '';
+function aggiornaContestoDiario(voci) { try { chatDiarioContext = diarioPerPrompt(voci, oggi()); } catch (e) { chatDiarioContext = ''; } }
+let memoria = memoriaVuota();
+let memoriaAttiva = true;
+let memoriaInAggiornamento = false;
+
+async function caricaMemoria() {
+  try { memoria = normalizzaMemoria(await binGet(BIN_MEMORIA)); } catch (e) { console.warn('Memoria non caricata:', e); memoria = memoriaVuota(); }
+}
+
+async function aggiornaProfiloMemoria() {
+  if (memoriaInAggiornamento || !memoriaAttiva) return;
+  const da = messaggiNonSintetizzati(memoria);
+  if (!da.length) return;
+  memoriaInAggiornamento = true;
+  try {
+    const r = await chiamaClaude([{ role: 'user', content: promptProfilo(memoria.profilo, da) }], { maxTokens: 700, useRAG: false });
+    const p = validaProfilo(r.testo, new Date().toISOString(), da[da.length - 1].ts);
+    if (p) {
+      memoria = { userId: memoria.userId, storico: memoria.storico, profilo: p };
+      if (!(await binPatchMulti(BIN_MEMORIA, { profilo: p }))) console.warn('Profilo sintetico non salvato');
+    } else console.warn('Profilo sintetico non valido: aggiornamento ignorato');
+  } catch (e) { console.warn('Aggiornamento profilo fallito:', e); }
+  finally { memoriaInAggiornamento = false; }
+}
+
+async function registraInMemoria(domanda, risposta) {
+  if (!memoriaAttiva) return;
+  try {
+    memoria = aggiungiMessaggioMemoria(aggiungiMessaggioMemoria(memoria, 'user', domanda), 'assistant', risposta);
+    const ok = await binPatchMulti(BIN_MEMORIA, { userId: memoria.userId, storico: memoria.storico });
+    if (!ok) { memoriaAttiva = false; console.warn('Memoria non disponibile (bin non raggiungibile): la chat continua senza.'); return; }
+    if (serveAggiornamentoProfilo(memoria)) aggiornaProfiloMemoria();
+  } catch (e) { console.warn('Memoria non salvata:', e); }
+}
 
 async function caricaContextoAssessment() {
   try {
@@ -3097,6 +3258,10 @@ Lavori sempre su tre dimensioni: coaching mentale (priorità assoluta), allename
 
 ${chatAssessmentContext}
 
+${testoProfiloPerPrompt(memoria.profilo)}
+
+${chatDiarioContext}
+
 Rispondi in italiano. Risposte concise e dirette. Usa markdown quando utile (## per titoli, **grassetto**, - per liste).`;
 
     const messages = chatAssessmentContext
@@ -3131,6 +3296,7 @@ Rispondi in italiano. Risposte concise e dirette. Usa markdown quando utile (## 
     thinking.remove();
     chatHistory.push({ role: 'assistant', content: risposta });
     aggiungiMessaggio('assistant', risposta);
+    registraInMemoria(testo, risposta);
 
   } catch(e) {
     thinking.remove();
@@ -3235,13 +3401,22 @@ document.getElementById('chat-open-btn').addEventListener('click', async () => {
   drawer.classList.add('open');
   if (chatHistory.length === 0) {
     await caricaContextoAssessment();
-    aggiungiMessaggio('assistant', 'Ciao! Sono il tuo Coach AI. Posso aiutarti su allenamento, nutrizione, coaching mentale o qualsiasi domanda sul tuo percorso. Di cosa hai bisogno?');
+    await caricaMemoria();
+    try { aggiornaContestoDiario(await caricaDiario()); } catch (e) { chatDiarioContext = ''; }
+    const precedenti = messaggiPerModello(memoria);
+    if (precedenti.length) {
+      chatHistory = precedenti.slice();
+      precedenti.forEach(function (m) { aggiungiMessaggio(m.role, m.content); });
+    } else {
+      aggiungiMessaggio('assistant', 'Ciao! Sono il tuo Coach AI. Posso aiutarti su allenamento, nutrizione, coaching mentale o qualsiasi domanda sul tuo percorso. Di cosa hai bisogno?');
+    }
   }
   document.getElementById('chat-input').focus();
 });
 
 document.getElementById('chat-close-btn').addEventListener('click', () => {
   document.getElementById('chat-drawer').classList.remove('open');
+  if (memoriaAttiva && haMessaggiDaSintetizzare(memoria)) aggiornaProfiloMemoria();
 });
 
 document.getElementById('chat-send-btn').addEventListener('click', inviaMessaggioChat);

@@ -183,3 +183,23 @@ test('patch con entries vuoto o con troppe chiavi: rifiutato', async () => {
   assert.strictEqual((await call({ op: 'patch', bin: 'allenamento', entries: tante })).statusCode, 400);
   assert.strictEqual(puts, 0);
 });
+
+test('bin memoria: alias riconosciuto, patch di più chiavi senza toccare le altre', async () => {
+  process.env.BIN_MEMORIA = '6bb0000000000000000mem1';
+  mockJsonbin(JSON.stringify({ userId: 'gianluca', storico: [{ r: 'user', t: 'ciao', ts: 'x' }] }));
+  const r = await call({ op: 'patch', bin: 'memoria', entries: { profilo: { obiettivi: ['a'] } } });
+  assert.strictEqual(r.statusCode, 200);
+  const salvato = JSON.parse(lastPutBody.payload);
+  assert.strictEqual(salvato.userId, 'gianluca');
+  assert.strictEqual(salvato.storico.length, 1);
+  assert.strictEqual(salvato.profilo.obiettivi[0], 'a');
+  const info = JSON.parse((await call({ op: 'info' })).body);
+  assert.strictEqual(info.memoria_produzione, false);
+});
+
+test('bin memoria non configurato: errore chiaro (la chat continua senza memoria)', async () => {
+  delete process.env.BIN_MEMORIA;
+  const r = await call({ op: 'get', bin: 'memoria' });
+  assert.strictEqual(r.statusCode, 500);
+  assert.ok(JSON.parse(r.body).error.includes('BIN_MEMORIA'));
+});

@@ -124,3 +124,36 @@ Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di 
 - `tests/kcal-sanity.test.js`: `verificaSommeKcal` boccia piani con somma fuori ±5% o pasti mancanti.
 - In app: dopo la generazione, se le somme non tornano parte UN tentativo di ricalibrazione con l'errore esplicito; si tiene il piano con scarto minore.
 - Limite noto: l'output reale dell'AI si verifica solo con un assessment sul deploy.
+
+## F10 — Verifiche finali da fare con assessment reale (prima del merge in `main`)
+Da eseguire su un nuovo assessment generato sul deploy Netlify di `v2`, con modulo compilato:
+- [ ] **Timeout Netlify:** nessun errore/timeout nella generazione; controllare nei log di `claude-proxy` la durata delle chiamate piano nutrizionale e piano allenamento (e dell'eventuale ricalibrazione kcal) rispetto al limite della function.
+- [ ] **Completezza file:** i txt "Assessment Completo", "Piano di Allenamento" e "Piano Nutrizionale" non sono tagliati (ultima sezione/riga presente).
+- [ ] **Tre esempi per pasto, anche a riposo:** ogni pasto del giorno di riposo ha 3 esempi, come l'allenamento (il parser separa titolo pasto e contenuto, verificato su piano reale del 15/11).
+- [ ] **Kcal coerenti (da fare al merge):** le kcal totali del tab Nutrizione (anello, tabella Macro Target, riga di controllo sotto "Distribuzione Pasti") coincidono con il file txt scaricato e con i dati generati dall'AI, per giorno di allenamento e di riposo.
+- Decisione 15/11: target kcal calcolati dall'app e passati all'AI come "TARGET OBBLIGATORI" (resta così finché funziona e risulta corretto). Nessun carico in kg nel piano e nessun kg suggerito: eventuale apprendimento solo dai dati inseriti dall'utente, non ora.
+- [ ] Da verificare: la formula usa sempre `+5` (Mifflin-St Jeor maschile) anche se il campo Sesso esiste; da gestire prima di aprire l'app a utenti donna.
+
+## F11 — Memoria persistente (storico chat + profilo sintetico)
+- `tests/memoria.test.js`: normalizzazione, limiti (40 messaggi, 2000 caratteri), 12 messaggi al modello, scatto ogni 10 messaggi utente, validazione del profilo, prompt anti-invenzione, integrazione statica.
+- `tests/jsonbin-proxy.test.js`: alias `memoria` (patch senza toccare le altre chiavi, bin non configurato).
+- Verifica end-to-end con servizi simulati (Playwright): 10 messaggi → profilo creato (useRAG=false), profilo nel prompt dell'11°, aggiornamento alla chiusura, ripristino dopo ricarica (12 messaggi), chat funzionante se il bin non c'è.
+- Da fare su deploy reale: creare il bin JSONBin con contenuto `{"payload":"{}"}`, impostare `BIN_MEMORIA` su Netlify (v2), poi controllare che il profilo rifletta solo ciò che l'utente ha detto e che non ci siano timeout.
+
+## F12 — Diario nel contesto del coach
+- `tests/diario-contesto.test.js`: ultimi 7 giorni, ordine, giorni compilati/senza voce, azioni "NON fatte" esplicite, troncamento, voci incomplete, integrazione statica.
+- Verifica end-to-end con servizi simulati: il diario di oggi compare nel prompt della chat (sintomi, sonno, brain dump non fatto).
+- Da fare su deploy reale: il coach cita il diario in modo pertinente e non inventa giorni mancanti.
+
+## F13 — Collaudo manuale sul deploy v2 (memoria, diario in chat, piano nutrizionale)
+Prerequisiti: `BIN_MEMORIA` impostato su Netlify (v2) e bin con contenuto `{"payload":"{}"}`; modulo assessment compilato con peso, altezza, età.
+1. **Banner e bin:** il banner blu dell'ambiente di test è presente; nessun errore rosso.
+2. **Memoria, salvataggio:** apri la chat, scrivi 10 messaggi su obiettivi, ostacoli e limiti fisici. Nel bin memoria (JSONBin) devono comparire `userId`, `storico` (20 voci) e, entro pochi secondi dopo il 10° messaggio, `profilo`.
+3. **Profilo fedele:** ogni voce del `profilo` deve riflettere solo ciò che hai scritto tu. Qualsiasi invenzione o diagnosi = difetto da segnalare.
+4. **Memoria, ripristino:** chiudi e ricarica la pagina, riapri la chat: devi rivedere gli ultimi 12 messaggi. Chiedi "cosa ti ho detto sui miei obiettivi?": la risposta deve essere coerente col profilo.
+5. **Chiusura chat:** scrivi 2-3 messaggi e chiudi la chat: il campo `aggiornato` del profilo deve cambiare.
+6. **Diario in chat:** salva una voce di diario oggi (sonno basso, un sintomo, brain dump NON spuntato). In chat chiedi "come sto andando questa settimana?": il coach deve citare quei dati senza inventare giorni mancanti.
+7. **Nuovo assessment (F10):** nessun timeout; file Assessment, Piano di Allenamento, Piano Nutrizionale non tagliati; 3 esempi per pasto anche a riposo; kcal del tab Nutrizione = txt = piano AI (giorno di allenamento e di riposo).
+8. **Modulo vuoto:** lascia peso, altezza o età vuoti e premi "Avanti": deve comparire "Compila prima: …" e non deve generare nulla.
+9. **Tab restylati su iPhone:** Nutrizione, Allenamento, Diario, Profilo senza scroll orizzontale, nav flottante non sovrapposta ai contenuti.
+10. **Log Netlify:** nessun errore o timeout in `claude-proxy` e `jsonbin-proxy`; annota la durata massima delle chiamate.
