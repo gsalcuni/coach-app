@@ -38,3 +38,10 @@ test('integrazione statica: il contesto entra nel prompt e si aggiorna dopo il s
   assert.ok(html.includes('aggiornaContestoDiario(await caricaDiario())'));
   assert.ok(html.includes('if (ok) aggiornaContestoDiario(voci);'));
 });
+
+test('prompt del coach: regola su fatti dichiarati e deduzioni', () => {
+  assert.ok(html.includes('REGOLA SUI FATTI'));
+  assert.ok(html.includes('distingui ciò che ha detto lui da ciò che deduci tu'));
+  assert.ok(html.includes('Non contraddire i fatti che l\'utente ha dichiarato'));
+  assert.ok(html.indexOf('REGOLA SUI FATTI') < html.indexOf('${chatAssessmentContext}', html.indexOf('REGOLA SUI FATTI')));
+});

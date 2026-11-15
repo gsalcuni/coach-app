@@ -157,3 +157,7 @@ Prerequisiti: `BIN_MEMORIA` impostato su Netlify (v2) e bin con contenuto `{"pay
 8. **Modulo vuoto:** lascia peso, altezza o età vuoti e premi "Avanti": deve comparire "Compila prima: …" e non deve generare nulla.
 9. **Tab restylati su iPhone:** Nutrizione, Allenamento, Diario, Profilo senza scroll orizzontale, nav flottante non sovrapposta ai contenuti.
 10. **Log Netlify:** nessun errore o timeout in `claude-proxy` e `jsonbin-proxy`; annota la durata massima delle chiamate.
+
+## F14 — Regola "fatti dichiarati vs deduzioni" nel prompt del coach
+- `tests/diario-contesto.test.js`: la regola è nel prompt di sistema, prima del contesto assessment.
+- Collaudo manuale (deploy): ripetere in chat "ho fatto candidature e non trovo un lavoro adeguato" e "dormivo 5 ore": il coach non deve affermare come fatti cose non dette (es. come scrive le candidature), né contraddire i dati dichiarati senza spiegare su quale base; le deduzioni devono essere domande o ipotesi. Lo stile resta diretto.
