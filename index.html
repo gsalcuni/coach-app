@@ -1855,6 +1855,13 @@ document.getElementById('btn-avanti-foto').addEventListener('click', () => {
     limitazioni: document.getElementById('p-limitazioni').value.trim(),
     preferenze_alimentari: document.getElementById('p-alimentari').value.trim()
   };
+  // Guardia: peso, altezza ed età sono indispensabili per i calcoli (BMR/TDEE); con 0 il piano esce senza senso.
+  const _mancanti = [['peso', 'Peso'], ['altezza', 'Altezza'], ['eta', 'Età']].filter(function (c) { return !(parametriSalvati[c[0]] > 0); }).map(function (c) { return c[1]; });
+  if (_mancanti.length) {
+    parametriSalvati = null;
+    alert('Compila prima: ' + _mancanti.join(', ') + '. Servono per calcolare i target calorici.');
+    return;
+  }
   document.getElementById('profilo-form').style.display = 'none';
   document.getElementById('profilo-foto').style.display = 'block';
 });
@@ -2145,11 +2152,24 @@ CENA: Xkcal P:Xg C:Xg G:Xg` }]);
       chiamaClaude([{ role: 'user', content: `Scheda allenamento professionale. ${ctxAllenamento}
 Scrivi: 1)PRINCIPI DI ALLENAMENTO: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE (ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH - LUNEDÌ: 5 esercizi con serie x rip e note tecniche 4)PULL - MERCOLEDÌ: 5 esercizi con serie x rip e note tecniche inclusi curl bicipiti hammer 5)TOTAL BODY - VENERDÌ: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. ${formatoAllenamento}` }], { maxTokens: 2500 }).then(function (r) { if (r.troncato) console.warn('Piano allenamento ancora troncato'); return r.testo; }),
       chiamaClaude([{ role: 'user', content: `Piano nutrizionale professionale. ${ctxNutrizione}
-Scrivi: titolo e macro target (proteine, carboidrati, grassi) per giorno di allenamento e di riposo; poi 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa struttura con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. ${targetNutrizione} Usa ESATTAMENTE queste kcal per pasto e questi macro target; scegli alimenti e grammature coerenti con quelle kcal. Max 600 parole.` }], { maxTokens: 2500 }).then(function (r) { if (r.troncato) console.warn('Piano nutrizionale ancora troncato'); return r.testo; }),
+Scrivi: titolo e macro target (proteine, carboidrati, grassi) per giorno di allenamento e di riposo; poi 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi il titolo del pasto con le kcal su una riga, poi esattamente 3 esempi alimentari alternativi con grammature, uno per riga con elenco puntato 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa identica struttura (titolo con kcal, poi esattamente 3 esempi, uno per riga) con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. ${targetNutrizione} Usa ESATTAMENTE queste kcal per pasto e questi macro target; scegli alimenti e grammature coerenti con quelle kcal. Max 600 parole.` }], { maxTokens: 2500 }).then(function (r) { if (r.troncato) console.warn('Piano nutrizionale ancora troncato'); return r.testo; }),
       callClaude([{ role: 'user', content: promptDocumentoAssessment(parametriSalvati, { somatotipo: r1.somatotipo, postura: r1.postura, iam: r1.iam }) }])
     ]);
     const r6 = { piano_allenamento_completo: t6.trim() };
-    const r7 = { piano_nutrizionale_completo: t7.trim() };
+    // Sanity check: se le kcal dei pasti non tornano, un solo tentativo di rigenerazione con l'errore esplicito.
+    let testoNutrizione = t7.trim();
+    try {
+      let chk = verificaSommeKcal(testoNutrizione, tdeeAll, tdeeRip);
+      if (!chk.ok) {
+        console.warn('Piano nutrizionale fuori target:', JSON.stringify(chk.dettagli));
+        document.getElementById('spinner-msg').textContent = 'Ricalibro il piano nutrizionale sui target...';
+        const d = chk.dettagli;
+        const tentativo = await chiamaClaude([{ role: 'user', content: `Riscrivi il piano nutrizionale in modo che rispetti i target. Errore: giorno allenamento somma ${d.allenamento.somma}kcal invece di ${tdeeAll}; giorno riposo somma ${d.riposo.somma}kcal invece di ${tdeeRip}. ${targetNutrizione} Mantieni lo stesso formato, con i cinque pasti per giorno e le kcal di ciascun pasto. Max 600 parole.\n\nPiano da correggere:\n${testoNutrizione}` }], { maxTokens: 2500 }).then(function (r) { return r.testo; });
+        const chk2 = verificaSommeKcal(tentativo, tdeeAll, tdeeRip);
+        if (chk2.scartoMax < chk.scartoMax) testoNutrizione = tentativo.trim();
+      }
+    } catch (e) { console.error('Sanity check piano nutrizionale:', e); }
+    const r7 = { piano_nutrizionale_completo: testoNutrizione };
     const r8 = { documento_assessment: t8.trim() };
 
     const reportCompleto = { ...r1, ...r2, ...r3, ...r4, ...r5, ...r6, ...r7, ...r8 };
@@ -2232,7 +2252,7 @@ function normTesto(t) {
   return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[*#_`]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 function titoloPulito(t) {
-  const x = String(t || '').replace(/\*\*/g, '').replace(/^[^\p{L}\p{N}]+/u, '').replace(/^\d+\s*[.)\-–:]\s*/, '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+  const x = String(t || '').replace(/\*\*/g, '').replace(/^[^\p{L}\p{N}]+/u, '').replace(/^\d+\s*[.)\-–:·•]\s*/, '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
   return x ? x.charAt(0).toUpperCase() + x.slice(1).toLowerCase() : x;
 }
 function ePartePiano(t) { return /parte\s*\d+\s*(\/|di)\s*\d+/i.test(String(t || '')); }
@@ -2311,10 +2331,13 @@ function parsePianoNutrizionale(testo) {
       const chiave = riconosciPasto(t);
       const boldNoto = /^\*\*[^*]+\*\*(\s*[—–-]\s*\d+\s*kcal)?:?$/.test(t);
       if (chiave || (boldNoto && !mh) || (mh && chiave)) {
-        const titolo = t.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim();
+        let titolo = t.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim();
+        let resto = '';
+        const fr = /\s*(→|->)\s*/.exec(titolo);
+        if (fr) { resto = titolo.slice(fr.index + fr[0].length).trim(); titolo = titolo.slice(0, fr.index).trim(); }
         let key = chiave || 'extra';
         if (key !== 'extra' && sez.pasti[key]) key = 'extra';
-        const blocco = { key: key, titolo: titolo, righe: [] };
+        const blocco = { key: key, titolo: titolo, righe: resto ? ['- ' + resto] : [] };
         if (key === 'extra') sez.extra.push(blocco); else sez.pasti[key] = blocco;
         sez.cur = blocco; reg(t); return;
       }
@@ -2356,6 +2379,23 @@ function parsePianoNutrizionale(testo) {
   const haPasti = ['allenamento', 'riposo'].some(function (d) { return out.giorni[d] && Object.keys(out.giorni[d].pasti).length > 0; });
   out.riuscito = haPasti;
   return out;
+}
+
+// Controllo di coerenza: la somma delle kcal dei pasti di ogni giorno deve stare entro la tolleranza dal target.
+function verificaSommeKcal(testo, tAll, tRip, tol) {
+  tol = tol || 0.05;
+  const P = parsePianoNutrizionale(testo || '');
+  const target = { allenamento: tAll, riposo: tRip };
+  const dettagli = {}; let ok = P.riuscito; let scartoMax = 0;
+  ['allenamento', 'riposo'].forEach(function (k) {
+    const g = P.giorni[k]; let somma = 0, pasti = 0;
+    if (g) PASTI_ORDINE.forEach(function (pp) { const b = g.pasti[pp[0]]; const m = b && /(\d{2,4})\s*kcal/i.exec(b.titolo); if (m) { somma += parseInt(m[1], 10); pasti++; } });
+    const scarto = target[k] > 0 ? Math.abs(somma - target[k]) / target[k] : 1;
+    dettagli[k] = { somma: somma, target: target[k], pasti: pasti, scarto: scarto };
+    if (pasti < 5 || scarto > tol) ok = false;
+    scartoMax = Math.max(scartoMax, scarto);
+  });
+  return { ok: ok, dettagli: dettagli, scartoMax: scartoMax };
 }
 // PIANO-PARSE-END
 // PIANO-ACC-START

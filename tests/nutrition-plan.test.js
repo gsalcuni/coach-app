@@ -109,3 +109,16 @@ test('refuso POMERIGIO / POMERRIGGIO riconosciuto', () => {
   assert.strictEqual(f('**Meta Pomerigio — 200 kcal**'), 'metapomeriggio');
   assert.strictEqual(f('### 🍊 Metà Pomeriggio'), 'metapomeriggio');
 });
+
+test('formato D (piano reale 15/11): titoli con "·", riposo con "→", somme kcal', () => {
+  const p = ctx.parse(fx('piano-reale-d.txt'));
+  assert.strictEqual(p.riuscito, true);
+  assert.strictEqual(ctx.titoloPulito(p.note.titolo), 'Note pratiche');
+  assert.strictEqual(Object.keys(p.giorni.allenamento.pasti).length, 5);
+  assert.strictEqual(Object.keys(p.giorni.riposo.pasti).length, 5);
+  const c = p.giorni.riposo.pasti.colazione;
+  assert.strictEqual(c.titolo, 'COLAZIONE – 537 kcal');
+  assert.ok(c.righe.join('\n').includes('Avena 80 g'));
+  assert.strictEqual(p.giorni.allenamento.pasti.colazione.righe.filter(r => r.startsWith('- ')).length, 3);
+  assert.strictEqual(JSON.stringify(regDi(p)), JSON.stringify(attese(fx('piano-reale-d.txt'))));
+});

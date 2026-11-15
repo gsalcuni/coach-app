@@ -118,3 +118,9 @@ Manuali (consumano token: l'assessment completo si fa **una volta**, sul bin di 
 - `tests/diario-profilo-ui.test.js`: id/handler originali presenti, Brain Dump card evidenziata, lista report con IAM in evidenza, hero verde, pulsanti download.
 - Verifica visiva manuale a 390px (anteprima): nessuno scroll orizzontale, salvataggio diario e storico funzionanti.
 - Generazione piani: una chiamata per piano (allenamento, nutrizione), coperta da `static-checks.test.js`.
+
+## F9 — Gate pre-pubblicazione e sanity check kcal
+- `tests/pre-push-check.sh`: sintassi + suite + controlli statici; da eseguire PRIMA di ogni commit/push.
+- `tests/kcal-sanity.test.js`: `verificaSommeKcal` boccia piani con somma fuori ±5% o pasti mancanti.
+- In app: dopo la generazione, se le somme non tornano parte UN tentativo di ricalibrazione con l'errore esplicito; si tiene il piano con scarto minore.
+- Limite noto: l'output reale dell'AI si verifica solo con un assessment sul deploy.

@@ -53,7 +53,7 @@ test('piani generati con una sola chiamata ciascuno, con continuazione', () => {
   const h = require('fs').readFileSync(__dirname + '/../index.html', 'utf8');
   assert.ok(!h.includes('parte 1 di 2') && !h.includes('parte 2 di 2'));
   assert.ok(h.includes('const [t6, t7, t8] = await Promise.all(['));
-  assert.ok(h.includes('piano_nutrizionale_completo: t7.trim()'));
+  assert.ok(h.includes('piano_nutrizionale_completo: testoNutrizione'));
   assert.ok(h.includes('piano_allenamento_completo: t6.trim()'));
   assert.ok(h.includes('Usa ESATTAMENTE queste kcal per pasto'));
   assert.ok((h.match(/maxTokens: 2500/g) || []).length >= 2);
@@ -64,4 +64,10 @@ test('Prompt piano nutrizionale: target kcal/macro per pasto passati all\'AI', (
   assert.ok(h.includes('targetNutrizione'));
   assert.ok(h.includes('TARGET OBBLIGATORI'));
   assert.ok(/\$\{targetNutrizione\}/.test(h));
+});
+
+test('Assessment: blocca peso/altezza/età a 0 prima di generare', () => {
+  const h = require('fs').readFileSync(__dirname + '/../index.html', 'utf8');
+  assert.ok(h.includes("Compila prima: "));
+  assert.ok(h.indexOf('Compila prima: ') < h.indexOf("document.getElementById('profilo-foto').style.display = 'block'", h.indexOf('Compila prima: ')) );
 });
