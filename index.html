@@ -2122,6 +2122,19 @@ CENA: Xkcal P:Xg C:Xg G:Xg` }]);
     const bmr = 10 * parametriSalvati.peso + 6.25 * parametriSalvati.altezza - 5 * parametriSalvati.eta + 5;
     const tdeeAll = Math.round(bmr * 1.55) + 100;
     const tdeeRip = Math.round(bmr * 1.55) - 250;
+    // Target deterministici (stesse formule e stessa ripartizione dell'app): l'AI li riceve e deve rispettarli.
+    const _peso = parametriSalvati.peso, _prot = Math.round(_peso * 2.0);
+    const _gAll = Math.round(_peso * 0.8), _gRip = Math.round(_peso * 0.9);
+    const _cAll = Math.round(Math.max(tdeeAll - _prot*4 - _gAll*9, 0) / 4);
+    const _cRip = Math.round(Math.max(tdeeRip - _prot*4 - _gRip*9, 0) / 4);
+    const _nomiPasti = ['Colazione','Metà Mattina','Pranzo','Metà Pomeriggio','Cena'];
+    const _splitAll = [0.22,0.10,0.30,0.10,0.28], _splitRip = [0.22,0.08,0.32,0.08,0.30];
+    const _kcalPasti = function (tot, split) {
+      const v = split.map(function (x) { return Math.round(tot * x); });
+      v[v.length - 1] += tot - v.reduce(function (a, b) { return a + b; }, 0);
+      return _nomiPasti.map(function (n, i) { return n + ' ' + v[i] + 'kcal'; }).join(', ');
+    };
+    const targetNutrizione = `TARGET OBBLIGATORI (non modificarli). Giorno allenamento: ${tdeeAll}kcal, proteine ${_prot}g, carboidrati ${_cAll}g, grassi ${_gAll}g; kcal per pasto: ${_kcalPasti(tdeeAll, _splitAll)}. Giorno riposo: ${tdeeRip}kcal, proteine ${_prot}g, carboidrati ${_cRip}g, grassi ${_gRip}g; kcal per pasto: ${_kcalPasti(tdeeRip, _splitRip)}.`;
     const ctxAllenamento = `Dati: ${params} Attrezzatura:${parametriSalvati.attrezzatura} Livello:${parametriSalvati.livello} Limitazioni:${parametriSalvati.limitazioni||'nessuna'}. Somatotipo:${r1.somatotipo}.`;
     const formatoAllenamento = `Formato: titoli markdown "## N) NOME SEZIONE" e, per ogni sessione, una tabella con colonne # | Esercizio | Serie x Rip | Note Tecniche. Max 600 parole.`;
     const ctxNutrizione = `Dati: ${params} Obiettivo:${parametriSalvati.obiettivo} Somatotipo:${r1.somatotipo} Preferenze:${parametriSalvati.preferenze_alimentari||'nessuna'}. TDEE allenamento:${tdeeAll}kcal riposo:${tdeeRip}kcal.`;
@@ -2132,7 +2145,7 @@ CENA: Xkcal P:Xg C:Xg G:Xg` }]);
       chiamaClaude([{ role: 'user', content: `Scheda allenamento professionale. ${ctxAllenamento}
 Scrivi: 1)PRINCIPI DI ALLENAMENTO: TUT 3-1-0, progressione +2.5kg ogni 2 settimane, RIR 2-3, deload settimana 7-8 2)CORE (ogni sessione): Dead Bug 2x10, Bird Dog 2x10, Pallof Press 2x12, Plank TRX 3x30sec 3)PUSH - LUNEDÌ: 5 esercizi con serie x rip e note tecniche 4)PULL - MERCOLEDÌ: 5 esercizi con serie x rip e note tecniche inclusi curl bicipiti hammer 5)TOTAL BODY - VENERDÌ: 5 esercizi con serie x rip e note tecniche 6)NOTE per limitazioni fisiche. ${formatoAllenamento}` }], { maxTokens: 2500 }).then(function (r) { if (r.troncato) console.warn('Piano allenamento ancora troncato'); return r.testo; }),
       chiamaClaude([{ role: 'user', content: `Piano nutrizionale professionale. ${ctxNutrizione}
-Scrivi: titolo e macro target (proteine, carboidrati, grassi) per giorno di allenamento e di riposo; poi 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa struttura con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. Le kcal dei cinque pasti di ogni giorno devono sommare al totale di quel giorno. Max 600 parole.` }], { maxTokens: 2500 }).then(function (r) { if (r.troncato) console.warn('Piano nutrizionale ancora troncato'); return r.testo; }),
+Scrivi: titolo e macro target (proteine, carboidrati, grassi) per giorno di allenamento e di riposo; poi 1)TIMING NUTRIENTI: quando mangiare cosa rispetto all'allenamento 2)GIORNO ALLENAMENTO(${tdeeAll}kcal): per ogni pasto(Colazione/MetaMattina/Pranzo/MetaPomeriggio/Cena) scrivi kcal e 2-3 esempi alimenti concreti con grammature 3)GIORNO RIPOSO(${tdeeRip}kcal): stessa struttura con valori ridotti 4)SUPPLEMENTAZIONE: cosa e quando 5)NOTE pratiche. ${targetNutrizione} Usa ESATTAMENTE queste kcal per pasto e questi macro target; scegli alimenti e grammature coerenti con quelle kcal. Max 600 parole.` }], { maxTokens: 2500 }).then(function (r) { if (r.troncato) console.warn('Piano nutrizionale ancora troncato'); return r.testo; }),
       callClaude([{ role: 'user', content: promptDocumentoAssessment(parametriSalvati, { somatotipo: r1.somatotipo, postura: r1.postura, iam: r1.iam }) }])
     ]);
     const r6 = { piano_allenamento_completo: t6.trim() };

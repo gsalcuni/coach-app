@@ -55,6 +55,13 @@ test('piani generati con una sola chiamata ciascuno, con continuazione', () => {
   assert.ok(h.includes('const [t6, t7, t8] = await Promise.all(['));
   assert.ok(h.includes('piano_nutrizionale_completo: t7.trim()'));
   assert.ok(h.includes('piano_allenamento_completo: t6.trim()'));
-  assert.ok(h.includes('devono sommare al totale di quel giorno'));
+  assert.ok(h.includes('Usa ESATTAMENTE queste kcal per pasto'));
   assert.ok((h.match(/maxTokens: 2500/g) || []).length >= 2);
+});
+
+test('Prompt piano nutrizionale: target kcal/macro per pasto passati all\'AI', () => {
+  const h = require('fs').readFileSync(__dirname + '/../index.html', 'utf8');
+  assert.ok(h.includes('targetNutrizione'));
+  assert.ok(h.includes('TARGET OBBLIGATORI'));
+  assert.ok(/\$\{targetNutrizione\}/.test(h));
 });
